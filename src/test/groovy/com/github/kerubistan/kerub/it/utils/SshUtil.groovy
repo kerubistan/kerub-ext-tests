@@ -15,12 +15,12 @@ class SshUtil {
 		client
 	}
 
-	static ClientSession loginWithPublicKey(SshClient client, String address, KeyPair keys) {
-		def connectFuture = client.connect("root", address, 22)
+	static ClientSession loginWithTestUser(SshClient client, String address) {
+		def connectFuture = client.connect("kerub-test", address, 22)
 		connectFuture.await()
 		def session = connectFuture.getSession()
 
-		session.addPublicKeyIdentity(keys)
+		session.addPasswordIdentity("password")
 		def authFuture = session.auth()
 		authFuture.await()
 		authFuture.verify()

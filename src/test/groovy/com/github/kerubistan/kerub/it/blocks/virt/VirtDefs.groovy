@@ -1,5 +1,6 @@
 package com.github.kerubistan.kerub.it.blocks.virt
 
+import com.github.kerubistan.kerub.it.utils.SshUtil
 import cucumber.api.DataTable
 import cucumber.api.java.After
 import cucumber.api.java.Before
@@ -7,20 +8,24 @@ import cucumber.api.java.en.Given
 import cucumber.api.java.en.When
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
-import org.apache.sshd.common.scp.ScpTimestamp
+import org.apache.sshd.common.util.io.NullOutputStream
 import org.junit.Assert
 import org.libvirt.Connect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.nio.file.attribute.PosixFilePermission
+import java.nio.charset.Charset
+import java.text.DecimalFormat
 import java.util.concurrent.TimeUnit
 
 class VirtDefs {
 
+	static String repoBase = "https://dl.bintray.com/k0zka/kerub-test-os-images/"
+	static String home = "/home/kerub-it-test/"
+
 	static disks = [
-			"centos_7" : "kerub-centos-7.tar.bz2",
-			"ubuntubsd": "kerub-ubuntubsd.tar.bz2"
+			"centos_7" : new Tuple("kerub-centos-7-all-3.tar.xz", 7),
+			"opensuse_42": new Tuple("kerub-opensuse-42-all-1.tar.xz", 7)
 	]
 
 	Map<String, UUID> vms = new HashMap()
@@ -106,7 +111,7 @@ ${builder}
     <emulator>/usr/bin/kvm-spice</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='$vmDisk'/>
+      <source file='$home/$vmDisk'/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </disk>
@@ -173,28 +178,35 @@ ${builder}
 		vms.put(name, id)
 	}
 
-	private GString createVmDisk(UUID id, String disk) {
+	private GString createVmDisk(UUID id, Tuple disk) {
 		def session = createSshSession()
 		def sftpClient = session.createSftpClient()
-		sftpClient.mkdir("/var/lib/libvirt/images/$id")
-		def scpClient = session.createScpClient()
-		logger.info("authenticated: {}, open: {}", session.isAuthenticated(), session.isOpen())
-		scpClient.upload(
-				Thread.currentThread().contextClassLoader.getResourceAsStream(disk),
-				"/var/lib/libvirt/images/$id/$disk",
-				size(disk),
-				[PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE],
-				new ScpTimestamp(System.currentTimeMillis(), System.currentTimeMillis())
-		)
 
-		def tarResult = session.executeRemoteCommand("tar -C /var/lib/libvirt/images/$id -xjvSf /var/lib/libvirt/images/$id/$disk")
-		logger.info("tar: {}", tarResult)
-		session.executeRemoteCommand("rm -f /var/lib/libvirt/images/$id/$disk")
-		def vmDisk = "/var/lib/libvirt/images/$id/${tarResult.trim()}"
+		if(!sftpClient.readDir(home).any { it.filename == disk.get(0) }) {
+			for(int i = 0; i < (Number)disk.get(1); i++) {
+				def slice = "${disk.get(0)}.${new DecimalFormat("00").format(i)}"
+				session.executeRemoteCommand(
+						"wget $repoBase$slice -O $home/$slice",
+						new NullOutputStream(),
+						Charset.forName("ASCII")
+				)
+			}
+			session.executeRemoteCommand("cat $home/${disk.get(0)}.* > $home/${disk.get(0)}")
+			def tarResult = session.executeRemoteCommand(
+					"tar -C $home// -xSJvf $home/${disk.get(0)}"
+			)
+			session.executeRemoteCommand("chmod 777 $tarResult ")
+
+		}
+
+		def templateImg = "$home/${disk.get(0).toString().replaceAll("tar.xz","qcow2")}"
+
+		session.executeRemoteCommand("qemu-img create -f qcow2 -o backing_file=$templateImg $home/${id}.qcow2")
+		session.executeRemoteCommand("chmod 777 $home/${id}.qcow2 ")
 
 		session.close()
-		vmDisks.add("/var/lib/libvirt/images/$id/")
-		vmDisk
+		vmDisks.add("$home/${id}.qcow2")
+		"${id}.qcow2"
 	}
 
 	long size(String resource) {
@@ -221,13 +233,14 @@ ${builder}
 
 	@Given("we wait until (\\S+) comes online, timeout: (\\d+) seconds")
 	void waitUntilPing(String address, long timeout) {
+		def client = SshUtil.createSshClient()
 		def start = System.currentTimeMillis()
 		def end = start + (timeout * 1000)
 		while(System.currentTimeMillis() < end) {
 			try {
-				InetAddress.getByName(address)
+				SshUtil.loginWithTestUser(client, address)
 				return
-			} catch (UnknownHostException uhe) {
+			} catch (Exception e) {
 				Thread.sleep(1000)
 				logger.info("still waiting for $address (${end - System.currentTimeMillis()} ms left)")
 				//fine, wait until it wakes up
