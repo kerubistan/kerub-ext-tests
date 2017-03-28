@@ -14,20 +14,22 @@ Tests will start virtual machines and destroy them.
  * There should be no public keys in ssh
  * __sshd__ must be enabled
  * there must be a user 'kerub-test' with password 'password' with __sudo__ permission
+ * "Defaults requiretty" should be removed from /etc/sudoers (fedora and the like)
+ * kerub-test user must be added to /etc/sudoers ```kerub-test (ALL:ALL) NOPASSWD:ALL```
  * all packages must be installed to perform it's function (see $use)
  * all other services should be disabled
- * image size should be as small as possible
+ * image size should be as small as possible - use e.g. ```fstrim```
  * image should be compressed with ```xz -4```
 
 ### Creating the archive
 
  * tar is used because compression algorithms do not deal well with sparse files - tar does
- * in the tar file there must be 
+ * in the tar file there must be a single image file with qcow2 format
 
 ### Naming convention
 
 image file:
-```v1/kerub-$operatingSystem-$osVersion-$use-$imageVersion.img```
+```v1/kerub-$operatingSystem-$osVersion-$use-$imageVersion.qcow2```
 image archive:
 ```v1/kerub-$operatingSystem-$osVersion-$use-$imageVersion.tar.xz```
 md5 checksum of the archive file
