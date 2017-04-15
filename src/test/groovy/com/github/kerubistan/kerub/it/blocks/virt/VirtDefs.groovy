@@ -2,6 +2,7 @@ package com.github.kerubistan.kerub.it.blocks.virt
 
 import com.github.kerubistan.kerub.it.utils.SshUtil
 import cucumber.api.DataTable
+import cucumber.api.Scenario
 import cucumber.api.java.After
 import cucumber.api.java.Before
 import cucumber.api.java.en.Given
@@ -35,10 +36,15 @@ class VirtDefs {
 
 	final static Logger logger = LoggerFactory.getLogger(VirtDefs)
 
+	Scenario scenario
+
 	@Before
-	void setup() {
+	void setup(Scenario scenario) {
+		this.scenario = scenario
 		logger.info("--- virt setup ---")
-		connect = new Connect("qemu:///system")
+		def hypervisorUrl = System.getProperty("hypervirsor","qemu:///system")
+		logger.info("connecting $hypervisorUrl")
+		connect = new Connect(hypervisorUrl)
 		logger.info("connected: {}", connect.connected)
 	}
 
@@ -66,6 +72,7 @@ ${builder}
 </network>
 """
 		logger.info("network xml:\n {}", networkXml)
+		scenario.write(networkXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		vnets.put(name, id)
 		connect.networkCreateXML(networkXml)
 	}
@@ -173,6 +180,7 @@ ${builder}
 </domain>
 
 """
+		scenario.write(domainXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		logger.info("vm definition: {}", domainXml)
 		connect.domainCreateXML(domainXml, 0)
 		vms.put(name, id)
@@ -239,9 +247,11 @@ ${builder}
 		while(System.currentTimeMillis() < end) {
 			try {
 				SshUtil.loginWithTestUser(client, address)
+				scenario.write("connected: $address")
 				return
 			} catch (Exception e) {
 				Thread.sleep(1000)
+				scenario.write("$address not connected ${System.currentTimeMillis()} - waiting")
 				logger.info("still waiting for $address (${end - System.currentTimeMillis()} ms left)")
 				//fine, wait until it wakes up
 			}

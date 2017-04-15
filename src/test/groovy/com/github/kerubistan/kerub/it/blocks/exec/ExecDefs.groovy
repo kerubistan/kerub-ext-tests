@@ -1,14 +1,20 @@
 package com.github.kerubistan.kerub.it.blocks.exec
 
 import com.github.kerubistan.kerub.it.utils.SshUtil
+import cucumber.api.Scenario
+import cucumber.api.java.Before
 import cucumber.api.java.en.Given
-import org.slf4j.LoggerFactory
 
 import java.nio.charset.Charset
 
 class ExecDefs {
 
-	private static final logger = LoggerFactory.getLogger(ExecDefs)
+	Scenario scenario = null
+
+	@Before
+	 setScenario(Scenario scenario) {
+		this.scenario = scenario
+	}
 
 	@Given("command executed on (\\S+):(.*)")
 	void executeOnNode(String nodeAddress, String command) {
@@ -16,9 +22,13 @@ class ExecDefs {
 		def client = SshUtil.createSshClient()
 		def session = SshUtil.loginWithTestUser(client, nodeAddress)
 
-		def out = new ByteArrayOutputStream()
-		session.executeRemoteCommand(command, out, Charset.forName("ASCII"))
-		logger.info("out: ${new String(out.toByteArray())}" )
+		def err = new ByteArrayOutputStream()
+		def out = session.executeRemoteCommand(command, err, Charset.forName("ASCII"))
+		def error = new String(err.toByteArray())
+		scenario.write(out)
+		if(!error.isEmpty()) {
+			scenario.write("err: $error")
+		}
 
 		session.close()
 
