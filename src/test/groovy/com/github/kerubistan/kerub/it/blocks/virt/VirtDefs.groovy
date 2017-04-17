@@ -95,7 +95,7 @@ ${builder}
   <currentMemory unit='${params['ram'].split(' ')[1]}'>${params['ram'].split(' ')[0]}</currentMemory>
   <vcpu placement='static'>${params['cpus'] ?: 1}</vcpu>
   <os>
-    <type arch='x86_64' machine='pc-i440fx-xenial'>hvm</type>
+    <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>
@@ -116,7 +116,6 @@ ${builder}
     <suspend-to-disk enabled='no'/>
   </pm>
   <devices>
-    <emulator>/usr/bin/kvm-spice</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file='$home/$vmDisk'/>

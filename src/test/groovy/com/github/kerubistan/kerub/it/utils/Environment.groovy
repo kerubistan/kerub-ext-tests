@@ -11,7 +11,7 @@ class Environment {
 	private final static String STORAGE_HOST_PROP = "storage-host"
 
 	private final static String STORAGE_HOST_USER_DEFAULT = "kerub-it-test"
-	private final static String STORAGE_HOST_USER_PROP = "storage-host"
+	private final static String STORAGE_HOST_USER_PROP = "storage-user"
 
 	private final static String STORAGE_HOST_PWD_DEFAULT = "password"
 	private final static String STORAGE_HOST_PWD_PROP = "storage-password"
