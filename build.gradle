@@ -7,6 +7,18 @@ repositories {
 	mavenCentral()
 }
 
+test {
+	systemProperties['hypervisor'] = systemProperties['lofasz']
+}
+
+//
+test {
+	println("hypervisor:")
+	println(System.getProperty("hypervisor"))
+	systemProperties System.properties
+	println(systemProperties["hypervisor"])
+}
+
 dependencies {
 	testCompile 'org.codehaus.groovy:groovy-all:2.3.11'
 	testCompile 'org.slf4j:slf4j-api:1.7.22'

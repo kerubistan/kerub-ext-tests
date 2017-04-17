@@ -1,5 +1,6 @@
 package com.github.kerubistan.kerub.it.blocks.virt
 
+import com.github.kerubistan.kerub.it.utils.Environment
 import com.github.kerubistan.kerub.it.utils.SshUtil
 import cucumber.api.DataTable
 import cucumber.api.Scenario
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit
 class VirtDefs {
 
 	static String repoBase = "https://dl.bintray.com/k0zka/kerub-test-os-images/"
-	static String home = "/home/kerub-it-test/"
+	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
 			"centos_7" : new Tuple("kerub-centos-7-all-3.tar.xz", 7),
@@ -42,7 +43,7 @@ class VirtDefs {
 	void setup(Scenario scenario) {
 		this.scenario = scenario
 		logger.info("--- virt setup ---")
-		def hypervisorUrl = System.getProperty("hypervirsor","qemu:///system")
+		def hypervisorUrl = Environment.getHypervisorUrl()
 		logger.info("connecting $hypervisorUrl")
 		connect = new Connect(hypervisorUrl)
 		logger.info("connected: {}", connect.connected)
@@ -229,10 +230,10 @@ ${builder}
 	private ClientSession createSshSession() {
 		def ssh = SshClient.setUpDefaultClient()
 		ssh.start()
-		def connectFuture = ssh.connect("kerub-it-test", "localhost", 22)
-		connectFuture.await(/*1, TimeUnit.SECONDS*/)
+		def connectFuture = ssh.connect(Environment.getStorageUser(), Environment.getStorageHost(), 22)
+		connectFuture.await()
 		def session = connectFuture.getSession()
-		session.addPasswordIdentity("password")
+		session.addPasswordIdentity(Environment.getStoragePassword())
 		def authFuture = session.auth()
 		authFuture.await(1, TimeUnit.SECONDS)
 		authFuture.verify()
@@ -285,7 +286,9 @@ ${builder}
 			logger.info("destroying network ${it.key}")
 			connect.networkLookupByUUID(it.value).destroy()
 		}
-		connect.close()
+		if(connect != null) {
+			connect.close()
+		}
 	}
 
 }
