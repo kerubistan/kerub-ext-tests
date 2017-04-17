@@ -31,19 +31,19 @@ class Environment {
 	}
 
 	static String getHypervisorUrl() {
-		getTestProperties().getProperty(HYPERVISOR_PROP, HYPERVISOR_DEFAULT)
+		getTestProperties().getProperty(HYPERVISOR_PROP, HYPERVISOR_DEFAULT).trim()
 	}
 
 	static String getStorageHost() {
-		getTestProperties().getProperty(STORAGE_HOST_PROP, STORAGE_HOST_DEFAULT)
+		getTestProperties().getProperty(STORAGE_HOST_PROP, STORAGE_HOST_DEFAULT).trim()
 	}
 
 	static String getStorageUser() {
-		getTestProperties().getProperty(STORAGE_HOST_USER_PROP, STORAGE_HOST_USER_DEFAULT)
+		getTestProperties().getProperty(STORAGE_HOST_USER_PROP, STORAGE_HOST_USER_DEFAULT).trim()
 	}
 
 	static String getStoragePassword() {
-		getTestProperties().getProperty(STORAGE_HOST_PWD_PROP, STORAGE_HOST_PWD_DEFAULT)
+		getTestProperties().getProperty(STORAGE_HOST_PWD_PROP, STORAGE_HOST_PWD_DEFAULT).trim()
 	}
 
 }
