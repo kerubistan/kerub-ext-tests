@@ -8,7 +8,7 @@ repositories {
 }
 
 test {
-	systemProperties['hypervisor'] = systemProperties['lofasz']
+	systemProperties['hypervisor'] = systemProperties['hypervisor']
 }
 
 //
