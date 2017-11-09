@@ -4,17 +4,11 @@ Feature: Kerub host stories
 	Given virtual network kerub-net-1 domain name kerub.it
 	  | host             | mac               | ip             |
 	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
-	  | lb-1             | 00:00:00:00:01:01 | 192.168.123.21 |
 	  | host-1           | 00:00:00:00:02:01 | 192.168.123.31 |
 	  | host-2           | 00:00:00:00:02:02 | 192.168.123.32 |
 	  | host-3           | 00:00:00:00:02:03 | 192.168.123.33 |
 	And virtual machine kerub-controller
 	  | mac  | 00:00:00:00:00:01  |
-	  | net  | kerub-net-1        |
-	  | disk | <controller-image> |
-	  | ram  | 512 MiB            |
-	And virtual machine lb-1
-	  | mac  | 00:00:00:00:01:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
 	  | ram  | 512 MiB            |
@@ -34,7 +28,6 @@ Feature: Kerub host stories
 	  | disk | <host-image>      |
 	  | ram  | 512 MiB           |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.21 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.33 comes online, timeout: 300 seconds
