@@ -3,13 +3,19 @@ package com.github.kerubistan.kerub.it.blocks.http
 import cucumber.api.java.After
 import org.apache.http.client.HttpClient
 import org.apache.http.impl.client.HttpClients
+import org.junit.Assert
 import org.junit.Before
 
 class Clients {
 
-	def clients = new HashMap<String, HttpClient>()
+	def private clients = new HashMap<String, Tuple>()
 
-	static instance = new InheritableThreadLocal<Clients>()
+	static instance = new InheritableThreadLocal<Clients>() {
+		@Override
+		protected Clients initialValue() {
+			return new Clients()
+		}
+	}
 
 	static HttpClient getTestClient(String clientId) {
 		return instance.get().getClient(clientId)
@@ -18,10 +24,29 @@ class Clients {
 	HttpClient getClient(String clientId) {
 		def client = clients.get(clientId)
 		if(client == null) {
-			client = new HttpClients().createDefault()
+			client = new Tuple(HttpClients.createDefault(), null)
 			clients.put(clientId, client)
 		}
-		return client
+		return client[0] as HttpClient
+	}
+
+	String getHttpSessionId(String clientId) {
+		def client = clients.get(clientId)
+		if(client == null) {
+			return null
+		}
+		return client[1] as String
+	}
+
+	void setHttpSessionId(String clientId, String sessionId) {
+		def client = clients.get(clientId)
+		Assert.assertNotNull(client)
+		clients.put(clientId, new Tuple(client.get(0), sessionId))
+	}
+
+	String getHttpSessionId() {
+		def client = clients.get(clientId)
+		return client.get(1) as String
 	}
 
 	@After

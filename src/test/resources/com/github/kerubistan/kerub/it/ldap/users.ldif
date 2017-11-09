@@ -1,0 +1,25 @@
+# User primary group
+dn: cn=users,dc=kerub,dc=com
+cn: jsmith
+objectClass: top
+objectClass: posixGroup
+gidNumber: 10000
+
+# User accounts
+dn: cn=jsmith,ou=users,dc=kerub,dc=com
+cn: John Smith
+givenName: John
+sn: Smith
+uid: jsmith
+uidNumber: 10000
+gidNumber: 10000
+homeDirectory: /home/jsmith
+mail: jsmith@example.com
+objectClass: top
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+loginShell: /bin/bash
+userPassword: {MD5}X03MO1qnZdYdgyfeuILPmQ==
