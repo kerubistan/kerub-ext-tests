@@ -27,6 +27,8 @@ Feature: Kerub host stories
 	  | net  | kerub-net-1       |
 	  | disk | <host-image>      |
 	  | ram  | 512 MiB           |
+	And we will attach the following log files at the end of the scenario
+	  | 192.168.123.11 | /var/log/kerub/kerub.log |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds

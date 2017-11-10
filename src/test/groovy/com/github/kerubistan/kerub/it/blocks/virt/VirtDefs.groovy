@@ -269,7 +269,7 @@ ${builder}
 		connect.domainLookupByUUID(vms[name]).shutdown()
 	}
 
-	@After
+	@After(order = Integer.MIN_VALUE)
 	void cleanup() {
 		logger.info("--- virt cleanups ---")
 		vms.entrySet().forEach {
