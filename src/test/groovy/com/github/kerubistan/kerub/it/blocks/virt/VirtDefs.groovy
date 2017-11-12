@@ -26,7 +26,7 @@ class VirtDefs {
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
-			"centos_7" : new Tuple("kerub-centos-7-all-3.tar.xz", 7),
+			"centos_7" : new Tuple("kerub-centos-7-all-4.tar.xz", 9),
 			"opensuse_42": new Tuple("kerub-opensuse-42-all-1.tar.xz", 7)
 	]
 
