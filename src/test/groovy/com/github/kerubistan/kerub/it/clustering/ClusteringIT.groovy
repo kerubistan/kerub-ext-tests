@@ -2,9 +2,11 @@ package com.github.kerubistan.kerub.it.clustering
 
 import cucumber.api.CucumberOptions
 import cucumber.api.junit.Cucumber
+import org.junit.Ignore
 import org.junit.runner.RunWith
 
 
+@Ignore("not quite finished")
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [
