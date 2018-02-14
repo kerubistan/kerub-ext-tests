@@ -65,6 +65,10 @@ class HttpDefs {
 
 	HttpUriRequest put(String url, String body) {
 		scenario.write("sending put to $applicationRoot/$url with body\n$body\n")
+		return putSilent(url, body)
+	}
+
+	HttpPut putSilent(String url, String body) {
 		def put = new HttpPut("$applicationRoot/$url")
 		put.setEntity(new StringEntity(body))
 		put.setHeader("Content-Type", "application/json")
@@ -73,6 +77,10 @@ class HttpDefs {
 
 	HttpUriRequest post(String url, String body) {
 		scenario.write("sending post to $applicationRoot/$url with body\n$body\n")
+		return postSilent(url, body)
+	}
+
+	HttpPost postSilent(String url, String body) {
 		def post = new HttpPost("$applicationRoot/$url")
 		post.setEntity(new StringEntity(body))
 		post.setHeader("Content-Type", "application/json")

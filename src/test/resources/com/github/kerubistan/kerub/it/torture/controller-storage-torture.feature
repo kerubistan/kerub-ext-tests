@@ -18,12 +18,13 @@ Feature: Torturing the controller storage
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
-	And session 1: user can create 10000000 virtual networks
-	And session 1: user can create 10000000 virtual disks
-	And session 1: user can create 10000000 virtual machines
-	And session 1: user can read the 10000000 virtual machines in random order
-	And session 1: user can read the 10000000 virtual disks in random order
-	And session 1: user can read the 10000000 virtual networks in random order
+	#not really a lot
+	And session 1: user can create 1000 virtual networks
+	And session 1: user can create 1000 virtual disks
+	And session 1: user can create 1000 virtual machines
+	And session 1: user can read the 1000 virtual machines in random order
+	And session 1: user can read the 1000 virtual disks in random order
+	And session 1: user can read the 1000 virtual networks in random order
 
 	Examples:
 	  | controller-image | install-repo-cmd                                                                                                              | install-cmd               | start-cmd                 |
