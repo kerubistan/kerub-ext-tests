@@ -92,6 +92,10 @@ class HttpDefs {
 		return new HttpGet("$applicationRoot/$url")
 	}
 
+	HttpUriRequest getSilent(String url) {
+		return new HttpGet("$applicationRoot/$url")
+	}
+
 	@Then("session (\\S+): user can login with (\\S+) password (\\S+)")
 	void verifyUserLogin(String sessionId, String username, String password) {
 		def client = Clients.instance.get().getClient(sessionId)
