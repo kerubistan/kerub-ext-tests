@@ -5,7 +5,6 @@ import com.github.kerubistan.kerub.it.blocks.http.HttpDefs
 import cucumber.api.Scenario
 import cucumber.api.java.Before
 import cucumber.api.java.en.Then
-import org.apache.http.HttpResponse
 import org.junit.Assert
 
 class TortureDefs {
@@ -104,15 +103,15 @@ class TortureDefs {
 		scenario.write("Finished write: ${new Date()}")
 		scenario.write("total time: ${System.currentTimeMillis() - start}")
 
-		virtualNetworks = results
+		virtualDisks = results
 	}
 
 	@Then("session (\\d+): user can read the virtual disks in random order (\\d+) times")
 	def verifyReadVirtualDisks(String sessionNr, int iterations) {
-		readRandomOrder(sessionNr, iterations, virtualNetworks, "s/r/virtual-storage")
+		readRandomOrder(sessionNr, iterations, virtualDisks, "s/r/virtual-storage")
 	}
 
-	@Then("session (\\d+): user can create virtual machines (\\d+) times")
+	@Then("session (\\d+): user can create (\\d+) virtual machines")
 	def verifyCreateVirtualMachines(String sessionNr, int iterations) {
 	}
 

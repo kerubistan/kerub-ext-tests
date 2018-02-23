@@ -21,6 +21,10 @@ Feature: Torturing the controller storage
 	#not really a lot
 	And session 1: user can create 500 virtual disks
 	And session 1: user can read the virtual disks in random order 10 times
+	And session 1: user can create 500 virtual networks
+	And session 1: user can read the virtual networks in random order 10 times
+	And session 1: user can create 500 virtual machines
+	And session 1: user can read the virtual networks in random order 10 times
 
 	Examples:
 	  | controller-image | install-repo-cmd                                                                                                              | install-cmd               | start-cmd                 |
