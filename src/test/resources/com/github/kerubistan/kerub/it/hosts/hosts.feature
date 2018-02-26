@@ -33,9 +33,9 @@ Feature: Kerub host stories
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.33 comes online, timeout: 300 seconds
-	And command executed on 192.168.123.11: <install-repo-cmd>
-	And command executed on 192.168.123.11: <install-cmd>
-	And command executed on 192.168.123.11: <start-cmd>
+	And command template executed on 192.168.123.11: <controller-image> / install-repo-cmd
+	And command template executed on 192.168.123.11: <controller-image> / install-cmd
+	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
@@ -54,5 +54,5 @@ Feature: Kerub host stories
 	And session 1: user can join host 192.168.123.33 using public key and fingerprint host-3-pubkey and store ID in temp host-3-id
 
 	Examples:
-	  | controller-image | host-image | install-repo-cmd                                                                                                              | install-cmd               | start-cmd                 |
-	  | centos_7         | centos_7   | sudo sh -c "curl https://bintray.com/k0zka/kerub-centos/rpm > /etc/yum.repos.d/kerub.repo && cat /etc/yum.repos.d/kerub.repo" | sudo yum -y install kerub | sudo service tomcat start |
+	  | controller-image | host-image |
+	  | centos_7         | centos_7   |

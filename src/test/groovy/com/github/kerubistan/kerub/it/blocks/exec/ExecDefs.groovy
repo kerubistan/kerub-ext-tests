@@ -1,5 +1,6 @@
 package com.github.kerubistan.kerub.it.blocks.exec
 
+import com.github.kerubistan.kerub.it.blocks.osimages.OsImages
 import com.github.kerubistan.kerub.it.blocks.tempdata.TempDefs
 import com.github.kerubistan.kerub.it.utils.SshUtil
 import com.github.kerubistan.kerub.it.utils.TemplateUtil
@@ -22,6 +23,13 @@ class ExecDefs {
 	@Before
 	setScenario(Scenario scenario) {
 		this.scenario = scenario
+	}
+
+	@Given("command template executed on (\\S+): (\\S+) / (.*)")
+	void executeTemplateCommandOnNode(String nodeAddress, String imageName, String commandId) {
+		String command = OsImages.getOsCommand(imageName, commandId)
+		scenario.write("command executed on $nodeAddress: $command")
+		executeOnNode(nodeAddress, command)
 	}
 
 	@Given("command executed on (\\S+):(.*)")
