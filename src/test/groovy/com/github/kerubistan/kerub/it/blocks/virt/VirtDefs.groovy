@@ -27,7 +27,7 @@ class VirtDefs {
 
 	static disks = [
 			"centos_7" : new Tuple("kerub-centos-7-all-4.tar.xz", 9),
-			"opensuse_42": new Tuple("kerub-opensuse-42-all-1.tar.xz", 7)
+			"opensuse_42": new Tuple("kerub-openSUSE-42-all-1.tar.xz", 13)
 	]
 
 	Map<String, UUID> vms = new HashMap()

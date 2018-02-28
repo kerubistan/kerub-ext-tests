@@ -54,5 +54,6 @@ Feature: Kerub host stories
 	And session 1: user can join host 192.168.123.33 using public key and fingerprint host-3-pubkey and store ID in temp host-3-id
 
 	Examples:
-	  | controller-image | host-image |
-	  | centos_7         | centos_7   |
+	  | controller-image | host-image  |
+	  | centos_7         | centos_7    |
+	  | centos_7         | opensuse_42 |
