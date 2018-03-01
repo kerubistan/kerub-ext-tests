@@ -1,9 +1,12 @@
 package com.github.kerubistan.kerub.it.blocks.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.github.kerubistan.kerub.it.blocks.tempdata.TempDefs
+import cucumber.api.DataTable
 import cucumber.api.Scenario
 import cucumber.api.java.Before
+import cucumber.api.java.en.Given
 import cucumber.api.java.en.Then
 import org.junit.Assert
 
@@ -37,6 +40,32 @@ class RestDefs {
 		def pkey = tree.get("fingerprint").toString()
 
 		TempDefs.instance.get().setData(tempName, pkey)
+	}
+
+	@Given("session (\\S+): within (\\d+) seconds the host details will be extended with the discovered details:")
+	void checkHostDetails(String sessionId, Integer timeoutSecs, DataTable validations) {
+		def client = Clients.instance.get().getClient(sessionId)
+
+		def start = System.currentTimeMillis()
+
+		def tree = null
+		while(
+				System.currentTimeMillis() - start < timeoutSecs * 1000
+						&& (tree == null || tree.get("result").any { it.get("capabilities") == null })) {
+			def response = client.execute(HttpDefs.instance.get().get("/s/r/host"))
+			Assert.assertEquals(200, response.statusLine.statusCode)
+			tree = new ObjectMapper().readTree(response.entity.content)
+			response.entity.content.close()
+		}
+
+		scenario.write("hosts response: ")
+		scenario.write(new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(tree))
+		//TODO: check all requirements in capabilities
+
+		if(System.currentTimeMillis() - start >= timeoutSecs * 1000) {
+			throw new Exception("did not make it within $timeoutSecs seconds, probably never will")
+		}
+
 	}
 
 	@Then("session (\\S+): user can join host (\\S+) using public key and fingerprint (\\S+) and store ID in temp (\\S+)")
