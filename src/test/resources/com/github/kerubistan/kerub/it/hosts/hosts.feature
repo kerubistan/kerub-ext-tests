@@ -53,9 +53,10 @@ Feature: Kerub host stories
 	And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pubkey and store ID in temp host-2-id
 	And session 1: user can join host 192.168.123.33 using public key and fingerprint host-3-pubkey and store ID in temp host-3-id
 	And session 1: within 60 seconds the host details will be extended with the discovered details:
-		| host.capabilities will be non-null |
+	  | host.capabilities will be non-null |
 
 	Examples:
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
+	  | opensuse_42      | opensuse_42 |
