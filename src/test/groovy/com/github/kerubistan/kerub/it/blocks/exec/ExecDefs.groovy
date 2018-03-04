@@ -39,13 +39,15 @@ class ExecDefs {
 		def session = SshUtil.loginWithTestUser(client, nodeAddress)
 
 		def err = new ByteArrayOutputStream()
-		def out = session.executeRemoteCommand(command, err, Charset.forName("ASCII"))
-		def error = new String(err.toByteArray())
-		scenario.write(out)
-		if (!error.isEmpty()) {
-			scenario.write("err: $error")
+		try {
+			def out = session.executeRemoteCommand(command, err, Charset.forName("ASCII"))
+			scenario.write(out)
+		} finally {
+			def error = new String(err.toByteArray())
+			if (!error.isEmpty()) {
+				scenario.write("err: $error")
+			}
 		}
-
 
 		session.close()
 		client.close()
