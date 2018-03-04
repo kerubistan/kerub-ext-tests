@@ -176,6 +176,10 @@ ${builder}
     </redirdev>
     <redirdev bus='usb' type='spicevmc'>
     </redirdev>
+    <rng model='virtio'>
+      <backend model='random'>/dev/random</backend>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </rng>
   </devices>
 </domain>
 
