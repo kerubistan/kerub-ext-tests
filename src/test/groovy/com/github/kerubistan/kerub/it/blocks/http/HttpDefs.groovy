@@ -1,7 +1,6 @@
 package com.github.kerubistan.kerub.it.blocks.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
-
 import cucumber.api.Scenario
 import cucumber.api.java.After
 import cucumber.api.java.Before
@@ -13,10 +12,12 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.fail
+import java.util.zip.GZIPInputStream
+
+import static org.junit.Assert.*
 
 class HttpDefs {
 
@@ -94,6 +95,29 @@ class HttpDefs {
 
 	HttpUriRequest getSilent(String url) {
 		return new HttpGet("$applicationRoot/$url")
+	}
+
+	@Then("http url (\\S+) is served compressed")
+	void verifyHttpCompression(String url) {
+		def client = HttpClients.createDefault()
+		def get = new HttpGet(url)
+		get.addHeader("Accept-Encoding", "gzip")
+		def response = client.execute(get)
+		assertEquals("gzip", response.getFirstHeader(
+				"Content-Encoding"
+		).value)
+		new GZIPInputStream(response.entity.content).readLines()
+
+		response.close()
+	}
+
+	@Then("http url (\\S+) is also cached")
+	void verifyHttpCaching(String url) {
+		def client = HttpClients.createDefault()
+		def get = new HttpGet(url)
+		get.addHeader("Accept-Encoding", "gzip")
+		def response = client.execute(get)
+		assertTrue(response.getHeaders("Cache-Control").length > 0)
 	}
 
 	@Then("session (\\S+): user can login with (\\S+) password (\\S+)")

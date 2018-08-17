@@ -1,5 +1,6 @@
 package com.github.kerubistan.kerub.it.blocks.virt
 
+import com.github.kerubistan.kerub.it.sizes.Sizes
 import com.github.kerubistan.kerub.it.utils.Environment
 import com.github.kerubistan.kerub.it.utils.SshUtil
 import cucumber.api.DataTable
@@ -58,24 +59,36 @@ class VirtDefs {
 		}
 
 		def networkXml = """
-<network>
-<name>$name</name>
-<uuid>$id</uuid>
-<forward mode='nat'/>
-<mac address='52:54:00:b2:79:76'/>
-<domain name='$domain'/>
-<ip address='192.168.123.1' netmask='255.255.255.0'>
-<dhcp>
-<range start='192.168.123.2' end='192.168.123.254'/>
-${builder}
-</dhcp>
-</ip>
-</network>
-"""
+			<network>
+				<name>$name</name>
+				<uuid>$id</uuid>
+				<forward mode='nat'/>
+				<mac address='52:54:00:b2:79:76'/>
+				<domain name='$domain'/>
+				<ip address='192.168.123.1' netmask='255.255.255.0'>
+					<dhcp>
+					<range start='192.168.123.2' end='192.168.123.254'/>
+					${builder}
+					</dhcp>
+				</ip>
+			</network>
+		""".stripMargin()
 		logger.info("network xml:\n {}", networkXml)
 		scenario.write(networkXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		vnets.put(name, id)
 		connect.networkCreateXML(networkXml)
+	}
+
+	@Given("virtual disks")
+	void createVirtualDisk(DataTable details) {
+		def session = createSshSession()
+
+		for(def row in details.raw()) {
+			def diskName = row.get(0)
+			def diskSize = Sizes.toSize(row.get(1))
+			session.executeRemoteCommand("truncate -s $diskSize")
+			vmDisks.add(diskName)
+		}
 	}
 
 	@Given("^virtual machine (\\S+)")
@@ -87,103 +100,115 @@ ${builder}
 
 		GString vmDisk = createVmDisk(id, disk)
 
-		def domainXml = """
-<domain type='kvm'>
-  <name>$name</name>
-  <uuid>$id</uuid>
-  <memory unit='${params['ram'].split(' ')[1]}'>${params['ram'].split(' ')[0]}</memory>
-  <currentMemory unit='${params['ram'].split(' ')[1]}'>${params['ram'].split(' ')[0]}</currentMemory>
-  <vcpu placement='static'>${params['cpus'] ?: 1}</vcpu>
-  <os>
-    <type arch='x86_64'>hvm</type>
-    <boot dev='hd'/>
-  </os>
-  <features>
-    <acpi/>
-    <apic/>
-  </features>
-  <cpu mode='host-passthrough'/>
-  <clock offset='utc'>
-    <timer name='rtc' tickpolicy='catchup'/>
-    <timer name='pit' tickpolicy='delay'/>
-    <timer name='hpet' present='no'/>
-  </clock>
-  <on_poweroff>destroy</on_poweroff>
-  <on_reboot>restart</on_reboot>
-  <on_crash>restart</on_crash>
-  <pm>
-    <suspend-to-mem enabled='no'/>
-    <suspend-to-disk enabled='no'/>
-  </pm>
-  <devices>
-    <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2'/>
-      <source file='$home/$vmDisk'/>
-      <target dev='vda' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
-    </disk>
-    <controller type='usb' index='0' model='ich9-ehci1'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
-    </controller>
-    <controller type='usb' index='0' model='ich9-uhci1'>
-      <master startport='0'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
-    </controller>
-    <controller type='usb' index='0' model='ich9-uhci2'>
-      <master startport='2'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
-    </controller>
-    <controller type='usb' index='0' model='ich9-uhci3'>
-      <master startport='4'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
-    </controller>
-    <controller type='pci' index='0' model='pci-root'/>
-    <controller type='virtio-serial' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
-    </controller>
-    <interface type='network'>
-      <mac address='${params['mac']}'/>
-      <source network='${params['net'] ?: 'default'}'/>
-      <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-    </interface>
-    <serial type='pty'>
-      <target port='0'/>
-    </serial>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
-    <channel type='unix'>
-      <source mode='bind'/>
-      <target type='virtio' name='org.qemu.guest_agent.0'/>
-      <address type='virtio-serial' controller='0' bus='0' port='1'/>
-    </channel>
-    <channel type='spicevmc'>
-      <target type='virtio' name='com.redhat.spice.0'/>
-      <address type='virtio-serial' controller='0' bus='0' port='2'/>
-    </channel>
-    <input type='tablet' bus='usb'/>
-    <input type='mouse' bus='ps2'/>
-    <input type='keyboard' bus='ps2'/>
-    <graphics type='spice' autoport='yes'>
-      <image compression='off'/>
-    </graphics>
-    <video>
-      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
-    </video>
-    <redirdev bus='usb' type='spicevmc'>
-    </redirdev>
-    <redirdev bus='usb' type='spicevmc'>
-    </redirdev>
-    <rng model='virtio'>
-      <backend model='random'>/dev/random</backend>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
-    </rng>
-  </devices>
-</domain>
+		def extraDisks = ""
+		if (params.containsKey("extra-disk")) {
+			extraDisks = """
+				<disk type='file' device='disk'>
+					<driver name='qemu' type='raw'/>
+					<source file='$home/${params['extra-disk']}'/>
+					<target dev='vdb' bus='virtio'/>
+					<address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+				</disk>
+			""".stripMargin()
+		}
 
-"""
+		def domainXml = """
+			<domain type='kvm'>
+			  <name>$name</name>
+			  <uuid>$id</uuid>
+			  <memory unit='${params['ram'].split(' ')[1]}'>${params['ram'].split(' ')[0]}</memory>
+			  <currentMemory unit='${params['ram'].split(' ')[1]}'>${params['ram'].split(' ')[0]}</currentMemory>
+			  <vcpu placement='static'>${params['cpus'] ?: 1}</vcpu>
+			  <os>
+				<type arch='x86_64'>hvm</type>
+				<boot dev='hd'/>
+			  </os>
+			  <features>
+				<acpi/>
+				<apic/>
+			  </features>
+			  <cpu mode='host-passthrough'/>
+			  <clock offset='utc'>
+				<timer name='rtc' tickpolicy='catchup'/>
+				<timer name='pit' tickpolicy='delay'/>
+				<timer name='hpet' present='no'/>
+			  </clock>
+			  <on_poweroff>destroy</on_poweroff>
+			  <on_reboot>restart</on_reboot>
+			  <on_crash>restart</on_crash>
+			  <pm>
+				<suspend-to-mem enabled='no'/>
+				<suspend-to-disk enabled='no'/>
+			  </pm>
+			  <devices>
+				<disk type='file' device='disk'>
+				  <driver name='qemu' type='qcow2'/>
+				  <source file='$home/$vmDisk'/>
+				  <target dev='vda' bus='virtio'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+				</disk>
+				$extraDisks
+				<controller type='usb' index='0' model='ich9-ehci1'>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
+				</controller>
+				<controller type='usb' index='0' model='ich9-uhci1'>
+				  <master startport='0'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
+				</controller>
+				<controller type='usb' index='0' model='ich9-uhci2'>
+				  <master startport='2'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
+				</controller>
+				<controller type='usb' index='0' model='ich9-uhci3'>
+				  <master startport='4'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
+				</controller>
+				<controller type='pci' index='0' model='pci-root'/>
+				<controller type='virtio-serial' index='0'>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+				</controller>
+				<interface type='network'>
+				  <mac address='${params['mac']}'/>
+				  <source network='${params['net'] ?: 'default'}'/>
+				  <model type='virtio'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+				</interface>
+				<serial type='pty'>
+				  <target port='0'/>
+				</serial>
+				<console type='pty'>
+				  <target type='serial' port='0'/>
+				</console>
+				<channel type='unix'>
+				  <source mode='bind'/>
+				  <target type='virtio' name='org.qemu.guest_agent.0'/>
+				  <address type='virtio-serial' controller='0' bus='0' port='1'/>
+				</channel>
+				<channel type='spicevmc'>
+				  <target type='virtio' name='com.redhat.spice.0'/>
+				  <address type='virtio-serial' controller='0' bus='0' port='2'/>
+				</channel>
+				<input type='tablet' bus='usb'/>
+				<input type='mouse' bus='ps2'/>
+				<input type='keyboard' bus='ps2'/>
+				<graphics type='spice' autoport='yes'>
+				  <image compression='off'/>
+				</graphics>
+				<video>
+				  <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+				</video>
+				<redirdev bus='usb' type='spicevmc'>
+				</redirdev>
+				<redirdev bus='usb' type='spicevmc'>
+				</redirdev>
+				<rng model='virtio'>
+				  <backend model='random'>/dev/random</backend>
+				  <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+				</rng>
+			  </devices>
+			</domain>
+		""".stripMargin()
 		scenario.write(domainXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		logger.info("vm definition: {}", domainXml)
 		connect.domainCreateXML(domainXml, 0)
@@ -262,6 +287,8 @@ ${builder}
 		}
 		Assert.fail("node $address is still not available")
 	}
+
+
 
 	@When("server (\\S+) crashes")
 	void destroyVm(String name) {

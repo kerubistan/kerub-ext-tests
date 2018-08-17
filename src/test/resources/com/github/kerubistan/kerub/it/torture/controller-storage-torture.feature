@@ -10,7 +10,8 @@ Feature: Torturing the controller storage
 	  | disk | <controller-image> |
 	  | ram  | 512 MiB            |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And command template executed on 192.168.123.11: <controller-image> / install-repo-cmd
+	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
+	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / install-cmd
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds

@@ -31,17 +31,15 @@ Feature: Kerub clustering
 	And we wait until 192.168.123.12 comes online, timeout: 240 seconds
 	And we wait until 192.168.123.21 comes online, timeout: 240 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 240 seconds
-	And command template executed on 192.168.123.11: <OS-image> / install-repo-cmd
-	And command template executed on 192.168.123.12: <OS-image> / install-repo-cmd
-	And command template executed on 192.168.123.11: <OS-image> / install-cmd
-	And command template executed on 192.168.123.12: <OS-image> / install-cmd
+	And command template executed on 192.168.123.11: <OS-image> / install-pkg-cmd
+	And command template executed on 192.168.123.12: <OS-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <OS-image> / start-cmd
 	And command template executed on 192.168.123.12: <OS-image> / start-cmd
 	And command template executed on 192.168.123.11: <OS-image> / configure-session-replication
 	And command template executed on 192.168.123.12: <OS-image> / configure-session-replication
 	And command executed on 192.168.123.11: echo TODO: setup kerub infinispan cluster
 	And command executed on 192.168.123.12: echo TODO: setup kerub infinispan cluster
-	And command template executed on 192.168.123.31: <install-ldap-cmd>
+	And command template executed on 192.168.123.31: <OS-image> / <install-ldap-cmd>
 	And file on 192.168.123.21: /tmp/lbconfig.conf generated from <lb-cfg-template> using parameters
 	  | backend_ips | csv | 192.168.123.11,192.168.123.12 |
 	And command executed on 192.168.123.21: sudo sh -c "cat /tmp/lbconfig.conf >> <lb-cfg-path> && cat <lb-cfg-path>"

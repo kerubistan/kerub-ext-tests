@@ -15,4 +15,16 @@ class OsImages {
 		input.close()
 		return properties.get(commandId)
 	}
+
+	static Map<String, String> getValues(String imageName) {
+		def values = new HashMap<String, String>()
+		Properties properties = new Properties()
+		def input = Thread.currentThread().getContextClassLoader().getResourceAsStream(imageNames.get(imageName))
+		properties.load(input)
+		properties.forEach { key, value ->
+			values.put(key.toString(), value.toString())
+		}
+		input.close()
+		return values
+	}
 }

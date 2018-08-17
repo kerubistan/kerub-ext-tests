@@ -1,4 +1,4 @@
-Feature: Kerub host stories II
+Feature: Kerub quick test after controller operating system update
 
   Scenario Outline: Kerub with single <controller-image> controller and single <host-image> host, both with latest version of all and everything
 	Given virtual network kerub-net-1 domain name kerub.it
@@ -19,10 +19,10 @@ Feature: Kerub host stories II
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
 	And command template executed on 192.168.123.11: <controller-image> / full-update-cmd
-	And we wait 30 seconds seconds
+	And we wait 30 seconds
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And command template executed on 192.168.123.11: <controller-image> / install-repo-cmd
-	And command template executed on 192.168.123.11: <controller-image> / install-cmd
+	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
+	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
@@ -42,3 +42,4 @@ Feature: Kerub host stories II
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
+	  | opensuse_42      | opensuse_42 |
