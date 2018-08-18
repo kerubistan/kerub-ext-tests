@@ -18,8 +18,8 @@ test {
 	systemProperties System.properties
 	println(systemProperties["hypervisor"])
 	reports {
-		junitXml.enabled = false
-		html.enabled = false
+		junitXml.enabled = true
+		html.enabled = true
 	}
 }
 
