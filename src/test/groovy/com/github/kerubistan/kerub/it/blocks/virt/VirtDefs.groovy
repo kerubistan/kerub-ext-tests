@@ -27,8 +27,8 @@ class VirtDefs {
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
-			"centos_7" : new Tuple("kerub-centos-7-all-4.tar.xz", 9),
-			"opensuse_42": new Tuple("kerub-openSUSE-42-all-1.tar.xz", 13)
+			"centos_7" : new Tuple("kerub-centos-7-all-4.qcow2", 9),
+			"opensuse_42": new Tuple("kerub-openSUSE-42-all-1.qcow2", 13)
 	]
 
 	Map<String, UUID> vms = new HashMap()
@@ -217,26 +217,8 @@ class VirtDefs {
 
 	private GString createVmDisk(UUID id, Tuple disk) {
 		def session = createSshSession()
-		def sftpClient = session.createSftpClient()
 
-		if(!sftpClient.readDir(home).any { it.filename == disk.get(0) }) {
-			for(int i = 0; i < (Number)disk.get(1); i++) {
-				def slice = "${disk.get(0)}.${new DecimalFormat("00").format(i)}"
-				session.executeRemoteCommand(
-						"wget $repoBase$slice -O $home/$slice",
-						new NullOutputStream(),
-						Charset.forName("ASCII")
-				)
-			}
-			session.executeRemoteCommand("cat $home/${disk.get(0)}.* > $home/${disk.get(0)}")
-			def tarResult = session.executeRemoteCommand(
-					"tar -C $home// -xSJvf $home/${disk.get(0)}"
-			)
-			session.executeRemoteCommand("chmod 777 $tarResult ")
-
-		}
-
-		def templateImg = "$home/${disk.get(0).toString().replaceAll("tar.xz","qcow2")}"
+		def templateImg = "$home/${disk.get(0).toString()}"
 
 		session.executeRemoteCommand("qemu-img create -f qcow2 -o backing_file=$templateImg $home/${id}.qcow2")
 		session.executeRemoteCommand("chmod 777 $home/${id}.qcow2 ")
