@@ -30,3 +30,4 @@ Feature: Torturing the controller storage
 	Examples:
 	  | controller-image |
 	  | centos_7         |
+	  | opensuse_42      |
