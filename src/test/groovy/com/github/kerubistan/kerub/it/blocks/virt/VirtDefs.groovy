@@ -11,19 +11,15 @@ import cucumber.api.java.en.Given
 import cucumber.api.java.en.When
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
-import org.apache.sshd.common.util.io.NullOutputStream
 import org.junit.Assert
 import org.libvirt.Connect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.nio.charset.Charset
-import java.text.DecimalFormat
 import java.util.concurrent.TimeUnit
 
 class VirtDefs {
 
-	static String repoBase = "https://dl.bintray.com/k0zka/kerub-test-os-images/"
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
@@ -226,15 +222,6 @@ class VirtDefs {
 		session.close()
 		vmDisks.add("$home/${id}.qcow2")
 		"${id}.qcow2"
-	}
-
-	long size(String resource) {
-		def input = Thread.currentThread().contextClassLoader.getResourceAsStream(resource)
-		def size = 0
-		while (input.read() != -1) {
-			size++
-		}
-		size
 	}
 
 	private ClientSession createSshSession() {
