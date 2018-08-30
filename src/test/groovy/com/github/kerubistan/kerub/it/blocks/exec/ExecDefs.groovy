@@ -89,21 +89,31 @@ class ExecDefs {
 	@Given("(\\S+) package file uploaded to (\\S+) directory (\\S+)")
 	void uploadFile(String distroName, String nodeAddress, String directory) {
 
-		def client = SshUtil.createSshClient()
-		def session = SshUtil.loginWithTestUser(client, nodeAddress)
+		def attempt = 0
+		def success = false
+		while(!success && attempt < 5) {
+			attempt++
+			try {
+				def client = SshUtil.createSshClient()
+				def session = SshUtil.loginWithTestUser(client, nodeAddress)
 
-		def sftpClient = session.createSftpClient()
-		def files = new File("ospackages/$distroName").listFiles()
-		assertEquals(1, files.length)
-		def file = files[0]
+				def sftpClient = session.createSftpClient()
+				def files = new File("ospackages/$distroName").listFiles()
+				assertEquals(1, files.length)
+				def file = files[0]
 
-		scenario.write("uploading ${file.getAbsolutePath()} to $nodeAddress:$directory")
-		def bytes = file.readBytes()
-		sftpClient.write("$directory/${file.getName()}").write(bytes)
-		def output = sftpClient.write("$directory/${file.getName()}")
-		def cnt = IOUtils.copy(new FileInputStream(file), output)
-		output.close()
-		scenario.write("upload done: $cnt bytes")
+				scenario.write("uploading ${file.getAbsolutePath()} to $nodeAddress:$directory")
+				def bytes = file.readBytes()
+				sftpClient.write("$directory/${file.getName()}").write(bytes)
+				def output = sftpClient.write("$directory/${file.getName()}")
+				def cnt = IOUtils.copy(new FileInputStream(file), output)
+				scenario.write("upload done: $cnt bytes")
+				output.close()
+				success = true
+			} catch (Exception e) {
+				scenario.write(e.toString())
+			}
+		}
 	}
 
 	@Given("file on (\\S+): (\\S+) generated from (\\S+) using parameters")
