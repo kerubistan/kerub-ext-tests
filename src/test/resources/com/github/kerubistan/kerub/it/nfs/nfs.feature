@@ -6,7 +6,6 @@ Feature: Nightmare Filesystem
 	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
 	  | host-1           | 00:00:00:00:02:01 | 192.168.123.31 |
 	  | host-2           | 00:00:00:00:02:02 | 192.168.123.32 |
-	  | host-3           | 00:00:00:00:02:03 | 192.168.123.33 |
 	And virtual disks
 	  | name          | size |
 	  | host-1-disk-1 | 1 TB |
@@ -20,7 +19,7 @@ Feature: Nightmare Filesystem
 	  | net        | kerub-net-1       |
 	  | disk       | <host-image>      |
 	  | ram        | 512 MiB           |
-	  | extra-disk | host-1-disk1      |
+	  | extra-disk | host-1-disk-1     |
 	And virtual machine host-2
 	  | mac  | 00:00:00:00:02:02 |
 	  | net  | kerub-net-1       |
@@ -34,12 +33,22 @@ Feature: Nightmare Filesystem
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
-	And command executed on 192.168.123.31:mkfs.ext4 -F /dev/vdb
-	And command executed on 192.168.123.31:mkdir /kerub
-	And command executed on 192.168.123.31:echo  >> /etc/fstab
+	And command executed on 192.168.123.31:sudo mkfs.ext4 -F /dev/vdb
+	And command executed on 192.168.123.31:sudo mkdir /kerub
+	And command executed on 192.168.123.31:sudo bash -c "echo /dev/vdb /kerub	ext4	defaults	0	2 >> /etc/fstab"
+	And command executed on 192.168.123.31:sudo mount /kerub
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
-	Then I have to finish this story
+	Then session 1: user can login with admin password password
+	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
+	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
+	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
+	And session 1: user can fetch public key for 192.168.123.31 into temp host-1-pk
+	And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
+	And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pk
+	And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pk and store ID in temp host-2-id
+	And session 1: host identified by key host-1-id should have fs storage capability registered with size around 1TB +-50GB
+	And I have to finish this story
 
 
 	Examples:

@@ -1,11 +1,11 @@
 package com.github.kerubistan.kerub.it.sizes
 
 class Sizes {
-	public static final def KB = 1024
-	public static final def MB = 1024 * KB
-	public static final def GB = 1024 * MB
-	public static final def TB = 1024 * GB
-	public static final def PB = 1024 * TB
+	public static final def KB = 1024.toBigInteger()
+	public static final def MB = KB * KB
+	public static final def GB = KB * MB
+	public static final def TB = KB * GB
+	public static final def PB = KB * TB
 	static BigInteger toSize(String spec) {
 		if(spec.endsWith("KB")) {
 			return spec.replaceAll("KB","").trim().toBigInteger() * KB

@@ -98,4 +98,22 @@ class RestDefs {
 		TempDefs.instance.get().setData(tempName, hostId.toString())
 	}
 
+	@Then("session (\\S+): host identified by key (\\S+) should have (\\S+) storage capability registered with size around (\\S+) \\+\\-(\\S+)")
+	void verifyStorageCapability(String sessionId, String hostKey, String storageType, String sizeEstimate, String sizePrecision) {
+		def capabilities = null
+		def attempt = 1
+		while(capabilities == null && attempt < 10) {
+			def hostId = TempDefs.instance.get().getData(hostKey)
+			def client = Clients.instance.get().getClient(sessionId)
+			scenario.write("checking /s/r/host/$hostId")
+			def response = client.execute(HttpDefs.instance.get().get("/s/r/host/$hostId"))
+			def responseText = response.entity.content.getText("ASCII")
+			scenario.write("response: ${response.getStatusLine().statusCode}\n $responseText")
+
+			def host = new ObjectMapper().readTree(responseText)
+			capabilities = host.get("capabilities")
+		}
+		Assert.assertNotNull(capabilities)
+	}
+
 }

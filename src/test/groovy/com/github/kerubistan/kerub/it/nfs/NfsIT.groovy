@@ -2,10 +2,8 @@ package com.github.kerubistan.kerub.it.nfs
 
 import cucumber.api.CucumberOptions
 import cucumber.api.junit.Cucumber
-import org.junit.Ignore
 import org.junit.runner.RunWith
 
-@Ignore("unfinished")
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [

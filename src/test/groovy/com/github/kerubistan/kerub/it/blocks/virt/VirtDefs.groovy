@@ -79,10 +79,11 @@ class VirtDefs {
 	void createVirtualDisk(DataTable details) {
 		def session = createSshSession()
 
-		for(def row in details.raw()) {
+		def list = details.raw()
+		for(def row in list.subList(1, list.size())) {
 			def diskName = row.get(0)
 			def diskSize = Sizes.toSize(row.get(1))
-			session.executeRemoteCommand("truncate -s $diskSize")
+			session.executeRemoteCommand("truncate -s $diskSize $diskName && chmod 777 $diskName")
 			vmDisks.add(diskName)
 		}
 	}
@@ -103,7 +104,7 @@ class VirtDefs {
 					<driver name='qemu' type='raw'/>
 					<source file='$home/${params['extra-disk']}'/>
 					<target dev='vdb' bus='virtio'/>
-					<address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+					<address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
 				</disk>
 			""".stripMargin()
 		}
@@ -207,6 +208,7 @@ class VirtDefs {
 		""".stripMargin()
 		scenario.write(domainXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		logger.info("vm definition: {}", domainXml)
+		connect.nodeInfo().sockets
 		connect.domainCreateXML(domainXml, 0)
 		vms.put(name, id)
 	}
