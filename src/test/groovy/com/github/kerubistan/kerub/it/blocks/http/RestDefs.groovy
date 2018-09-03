@@ -1,8 +1,12 @@
 package com.github.kerubistan.kerub.it.blocks.http
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.github.kerubistan.kerub.it.blocks.tempdata.TempDefs
+import com.github.kerubistan.kerub.it.sizes.Sizes
 import cucumber.api.DataTable
 import cucumber.api.Scenario
 import cucumber.api.java.Before
@@ -99,7 +103,13 @@ class RestDefs {
 	}
 
 	@Then("session (\\S+): host identified by key (\\S+) should have (\\S+) storage capability registered with size around (\\S+) \\+\\-(\\S+)")
-	void verifyStorageCapability(String sessionId, String hostKey, String storageType, String sizeEstimate, String sizePrecision) {
+	void verifyStorageCapability(
+			String sessionId,
+			String hostKey,
+			String storageType,
+			String sizeEstimate,
+			String sizePrecision,
+			DataTable props) {
 		def capabilities = null
 		def attempt = 1
 		while(capabilities == null && attempt < 10) {
@@ -114,6 +124,27 @@ class RestDefs {
 			capabilities = host.get("capabilities")
 		}
 		Assert.assertNotNull(capabilities)
+		def storageCapabilities = capabilities.get("storageCapabilities")
+		Assert.assertNotNull(storageCapabilities)
+
+		def storage = storageCapabilities.find {
+			def rows = props.raw().subList(1, props.raw().size())
+			((it["@type"] as TextNode).textValue() == storageType) && matches(rows, it)
+		}
+		Assert.assertNotNull(storage)
+		Assert.assertEquals(
+				Sizes.toSize(sizeEstimate).toDouble(),
+				(storage["size"] as LongNode).longValue().toDouble(),
+				Sizes.toSize(sizePrecision).toDouble(),
+		)
 	}
 
+	static boolean matches(List<List<String>> expected, JsonNode actual) {
+		for(row in expected) {
+			if((actual[row[0]] as TextNode).textValue() != row[1].trim()) {
+				return false
+			}
+		}
+		return true
+	}
 }

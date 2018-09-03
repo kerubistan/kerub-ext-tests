@@ -1,4 +1,4 @@
-package com.github.kerubistan.kerub.it.nfs
+package com.github.kerubistan.kerub.it.iscsi
 
 import cucumber.api.CucumberOptions
 import cucumber.api.junit.Cucumber
@@ -7,7 +7,7 @@ import org.junit.runner.RunWith
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [
-				"classpath:com/github/kerubistan/kerub/it/nfs/nfs.feature"
+				"classpath:com/github/kerubistan/kerub/it/iscsi/iscsi.feature"
 		],
 		glue = [
 				"classpath:com.github.kerubistan.kerub.it.clustering",
@@ -21,9 +21,7 @@ import org.junit.runner.RunWith
 				"classpath:com.github.kerubistan.kerub.it.blocks.wip"
 		],
 		plugin = [
-				"pretty", "html:build/reports/cucumber/nfs", "json:build/reports/cucumber/nfs.json"
+				"pretty", "html:build/reports/cucumber/iscsi", "json:build/reports/cucumber/iscsi.json"
 		]
 )
-class NfsIT {
-
-}
+class IscsiIT {}

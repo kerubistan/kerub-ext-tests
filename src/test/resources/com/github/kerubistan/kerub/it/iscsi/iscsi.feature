@@ -1,6 +1,8 @@
-Feature: Nightmare Filesystem
+Feature: The worst palindrome
 
-  Scenario Outline: NFS sharing images
+  Scenario Outline: ISCSI sharing LVM images
+	# obviously this story os only for linux hosts and BSD / other hosts need another story for
+	# their volume manager software
 	Given virtual network kerub-net-1 domain name kerub.it
 	  | host             | mac               | ip             |
 	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
@@ -33,10 +35,7 @@ Feature: Nightmare Filesystem
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
-	And command executed on 192.168.123.31:sudo mkfs.ext4 -F /dev/vdb
-	And command executed on 192.168.123.31:sudo mkdir /kerub
-	And command executed on 192.168.123.31:sudo bash -c "echo /dev/vdb /kerub	ext4	defaults	0	2 >> /etc/fstab"
-	And command executed on 192.168.123.31:sudo mount /kerub
+	And command executed on 192.168.123.31:sudo lvm vgcreate kerub-storage /dev/vdb
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
@@ -47,12 +46,10 @@ Feature: Nightmare Filesystem
 	And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
 	And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pk
 	And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pk and store ID in temp host-2-id
-	And session 1: host identified by key host-1-id should have fs storage capability registered with size around 1TB +-50GB
-	  | property   | expected value |
-	  | mountPoint | /kerub         |
-	  | fsType     | ext4           |
+	And session 1: host identified by key host-1-id should have lvm storage capability registered with size around 1TB +-50GB
+	  | property        | expected value |
+	  | volumeGroupName | kerub-storage  |
 	And I have to finish this story
-
 
 	Examples:
 	  | controller-image | host-image  |
