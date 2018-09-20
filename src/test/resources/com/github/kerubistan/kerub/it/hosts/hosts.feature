@@ -11,7 +11,7 @@ Feature: Kerub host stories
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 512 MiB            |
+	  | ram  | 1024 MiB            |
 	And virtual machine host-1
 	  | mac  | 00:00:00:00:02:01 |
 	  | net  | kerub-net-1       |
@@ -33,8 +33,11 @@ Feature: Kerub host stories
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.33 comes online, timeout: 300 seconds
+	And we wait 15 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
+	And kerub logger update on 192.168.123.11, root is info level
+	  | com.github.kerubistan.kerub | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
