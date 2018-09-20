@@ -4,15 +4,27 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.github.kerubistan.kerub.it.blocks.tempdata.TempDefs
 import com.github.kerubistan.kerub.it.sizes.Sizes
 import cucumber.api.DataTable
+import cucumber.api.PendingException
 import cucumber.api.Scenario
 import cucumber.api.java.Before
+import cucumber.api.java.en.And
 import cucumber.api.java.en.Given
 import cucumber.api.java.en.Then
+import org.apache.commons.io.IOUtils
+import org.apache.commons.io.input.CountingInputStream
+import org.apache.commons.io.output.NullOutputStream
+import org.apache.http.HttpResponse
+import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.junit.Assert
+
+import java.util.zip.GZIPInputStream
+
+import static com.github.kerubistan.kerub.it.utils.PropertyUtil.toMap
 
 class RestDefs {
 	Scenario scenario = null
@@ -89,7 +101,7 @@ class RestDefs {
 						"dedicated" : true
 					},
 					"powerManagement" : []
-				}"""
+				}""".stripMargin()
 				)
 		)
 
@@ -146,5 +158,200 @@ class RestDefs {
 			}
 		}
 		return true
+	}
+
+	@And("^session (\\S+): user can upload a (\\S+) file (\\S+) - generated id into into temp:(\\S+)")
+	void uploadAFile(String sessionId, String format, String fileName, String tempName) throws Throwable {
+		def client = Clients.instance.get().getClient(sessionId)
+		def id = UUID.randomUUID()
+
+		def size = IOUtils.copy(new GZIPInputStream(
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+		), new NullOutputStream())
+		def put = HttpDefs.instance.get().put("s/r/virtual-storage", """
+		{
+			"@type":"virtual-storage",
+			"id" : "$id",
+			"name" : "$fileName",
+			"size" : "$size"
+		}
+		""".stripMargin())
+		def putResponse = client.execute(put)
+		logResponse(putResponse)
+
+		def post = HttpDefs.instance.get().post("s/r/virtual-storage/load/$format/$id")
+		// TODO: how the FUCK do I form upload and multipart with this library?
+		post.setHeader("Content-Type", "multipart/form-data")
+		def countingInputStream = new CountingInputStream(new GZIPInputStream(
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+		))
+		post.setEntity(MultipartEntityBuilder.create().addBinaryBody("file", countingInputStream).build())
+
+		def start = System.currentTimeMillis()
+		def response = client.execute(post)
+
+		scenario.write("Upload of ${countingInputStream.byteCount} bytes took ${start - System.currentTimeMillis()} ms")
+		scenario.write("status code is ${response.getStatusLine().statusCode}")
+
+		Assert.assertEquals(204, response.getStatusLine().statusCode)
+		TempDefs.instance.get().setData(tempName, id.toString())
+	}
+
+	@And("^session (\\S+): user can create a disk with size (\\S+) - generated id into into temp:(\\S+)")
+	void createDisk(String sessionId, String sizeSpec, String tempName) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def id = UUID.randomUUID()
+
+		def put = HttpDefs.instance.get().put("s/r/virtual-storage", """
+		{
+			"@type":"virtual-storage",
+			"id" : "$id",
+			"name" : "disk-$id",
+			"size" : "${Sizes.toSize(sizeSpec)}"
+		}
+		""".stripMargin())
+
+		TempDefs.instance.get().setData(tempName, id.toString())
+		def response = client.execute(put)
+		logResponse(response)
+
+	}
+
+	@And("^session (\\S+): user can create a vm - generated id into into temp:(\\S+)")
+	void createVm(String sessionId, String tempName, DataTable dataTable) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def id = UUID.randomUUID()
+
+		def props = toMap(dataTable)
+
+		def storages = ""
+		for(key in props.keySet()) {
+			if(key.startsWith("storage-")) {
+				def conn = props.get(key)
+				def device = conn.substring(0, conn.indexOf(":"))
+				def deviceTemp = conn.substring(conn.indexOf(":") + 1)
+				if(!storages.isEmpty()) {
+					storages += ","
+				}
+				storages += """
+					{
+						"virtualStorageId" : "${TempDefs.instance.get().getData(deviceTemp)}",
+						"device" : "${device}",
+						"bus" : "virtio"
+					}
+					"""
+			}
+		}
+
+		def put = HttpDefs.instance.get().put("s/r/vm", """
+		{
+			"@type":"vm",
+			"id" : "$id",
+			"name" : "vm-$id",
+			"memory" : {
+				"min" : ${Sizes.toSize(props.get("memory-min"))},
+				"max" : ${Sizes.toSize(props.get("memory-max"))}
+			},
+			"virtualStorageLinks" : [${storages}]
+		}
+		""".stripMargin())
+
+		def response = client.execute(put)
+		logResponse(response)
+		TempDefs.instance.get().setData(tempName, id.toString())
+	}
+
+	private String logResponse(HttpResponse response) {
+		scenario.write("status code is ${response.getStatusLine().statusCode}")
+		if(response.entity != null) {
+			def responseText = response.entity.content.newReader().text
+			scenario.write("response body is ${responseText}")
+			return responseText
+		} else {
+			scenario.write(" -- no response body")
+			return ""
+		}
+	}
+
+	@And("^session (\\S+): user can start the VM temp:(\\S+)")
+	void startVm(String sessionId, String tempName) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def vmId = UUID.fromString( TempDefs.instance.get().getData(tempName))
+
+		def response = client.execute(HttpDefs.instance.get().post("s/r/vm/$vmId/start"))
+
+		logResponse(response)
+	}
+
+	@And("^session (\\S+): the virtual machine temp:(\\S+) should start - tolerate (\\d+) second delay")
+	void verifyVmStarts(String sessionId, String tempName, int toleranceSeconds) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def vmId = UUID.fromString( TempDefs.instance.get().getData(tempName))
+
+		def start = System.currentTimeMillis()
+		def vmDyn = null
+		while(vmDyn == null && start + (1000 * toleranceSeconds) > System.currentTimeMillis()) {
+			Thread.sleep(1000)
+			def response = client.execute(HttpDefs.instance.get().get("s/r/vm-dyn/$vmId"))
+			logResponse(response)
+			if(response.statusLine.statusCode == 200) {
+				vmDyn = response.entity.content.getText("ASCII")
+			}
+		}
+
+		if(vmDyn == null) {
+			Assert.fail("looks like the VM failed to start")
+		}
+	}
+
+	@And("^session (\\S+): storage temp:(\\S+) should be allocated on host temp:(\\S+)")
+	void verifyStorageAllocation(String sessionId, String storageTempName, String hostTempName) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def storageId = UUID.fromString( TempDefs.instance.get().getData(storageTempName))
+		def hostId = UUID.fromString( TempDefs.instance.get().getData(hostTempName))
+
+		def response = client.execute(HttpDefs.instance.get().get("s/r/virtual-storage-dyn/$storageId"))
+		logResponse(response)
+
+		def responseJson = new ObjectMapper().readTree(response.entity.content.getText())
+
+		def allocation = responseJson.get("allocation")
+		//TODO
+
+		throw new PendingException("TODO")
+	}
+
+	@And("^session (\\S+): virtual machine temp:(\\S+) should be started on host temp:(\\S+)")
+	void verifyVmHost(String sessionId, String vmTempName, String hostTempName) {
+		throw new PendingException("TODO")
+	}
+
+	@And("^session (\\S+): all storage technologies disabled except (\\S+)")
+	void disableStorageTechnologies(String sessionId, String enabledStorageTechnologies) throws Throwable {
+		def client = Clients.instance.get().getClient(sessionId)
+		def enabled = enabledStorageTechnologies.split(",")
+
+		def response = client.execute(HttpDefs.instance.get().get("s/r/config"))
+		def jsonConfig = new ObjectMapper().readTree(logResponse(response))
+		def storageTechnologies = jsonConfig["storageTechnologies"] as ObjectNode
+
+		for(prop in storageTechnologies.fields()) {
+			if(prop.key.endsWith("Enabled") && storageTechnologies.get(prop.key).booleanValue()) {
+				storageTechnologies.put(prop.key, false)
+			}
+		}
+
+		for(prop in enabled) {
+			storageTechnologies.put(prop + "Enabled",true)
+		}
+
+		def put = HttpDefs.instance.get()
+				.put("s/r/config",
+				new ObjectMapper()
+						.configure(SerializationFeature.INDENT_OUTPUT, true)
+						.writeValueAsString(jsonConfig))
+		put.setHeader("Content-Type", "application/json")
+		final def updateResponse = client.execute(put)
+		logResponse(updateResponse)
 	}
 }

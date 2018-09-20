@@ -7,6 +7,7 @@ import com.github.kerubistan.kerub.it.utils.TemplateUtil
 import cucumber.api.DataTable
 import cucumber.api.Scenario
 import cucumber.api.java.Before
+import cucumber.api.java.en.And
 import cucumber.api.java.en.Given
 import freemarker.cache.ClassTemplateLoader
 import freemarker.cache.StringTemplateLoader
@@ -34,20 +35,31 @@ class ExecDefs {
 	void executeTemplateCommandOnNode(String nodeAddress, String imageName, String commandId) {
 		String commandTemplate = OsImages.getOsCommand(imageName, commandId)
 
+		def params = new HashMap<String, Object>()
+		params.putAll(OsImages.getValues(imageName))
+		params.put("packageFile", new File("ospackages/$imageName").listFiles()[0].getName())
+
+		String command = processTemplate(commandTemplate, params)
+
+		scenario.write("command executed on $nodeAddress: $command")
+		executeOnNode(nodeAddress, command)
+	}
+
+	private String processTemplate(String commandTemplate, HashMap<String, Object> params) {
+		Template template = makeTemplate(commandTemplate)
+		def writer = new StringWriter()
+		template.process(params, writer)
+		def command = writer.toString()
+		command
+	}
+
+	private Template makeTemplate(String commandTemplate) {
 		Configuration cfg = new Configuration()
 		def loader = new StringTemplateLoader()
 		loader.putTemplate("template", commandTemplate)
 		cfg.templateLoader = loader
 		Template template = cfg.getTemplate("template")
-		def writer = new StringWriter()
-		def params = new HashMap<String, Object>()
-		params.putAll(OsImages.getValues(imageName))
-		params.put("packageFile", new File("ospackages/$imageName").listFiles()[0].getName())
-		template.process(params, writer)
-		def command =  writer.toString()
-
-		scenario.write("command executed on $nodeAddress: $command")
-		executeOnNode(nodeAddress, command)
+		template
 	}
 
 	@Given("command executed on (\\S+):(.*)")
@@ -160,5 +172,43 @@ class ExecDefs {
 		command = "sudo cat $path"
 		scenario.write(command)
 		scenario.write(session.executeRemoteCommand(command))
+	}
+
+	class Logger {
+		String name
+		String level
+	}
+
+	@And("^kerub logger update on (\\S+), root is (\\S+) level")
+	void kerubLoggerUpdateOnRootIsInfoLevel(String addr, String rootLevel, DataTable levels) throws Throwable {
+		def client = SshUtil.createSshClient()
+		def session = SshUtil.loginWithTestUser(client, addr)
+
+		def params = new HashMap<String, Object>()
+		params.put("rootLevel", rootLevel)
+		def loggers = new ArrayList<Logger>()
+		params.put("loggers", loggers)
+		for(row in levels.raw()) {
+			def logger = new Logger()
+			logger.name = row.get(0)
+			logger.level = row.get(1)
+			loggers.add(logger)
+		}
+		def loggerConfig = processTemplate(
+				Thread.currentThread().getContextClassLoader().getResourceAsStream("logback-template.xml.fm").text,
+				params
+		)
+
+
+
+		def sftpClient = session.createSftpClient()
+		def output = sftpClient. write("/tmp/kerub-logback.xml")
+		def writer = output.newWriter()
+		writer.write(loggerConfig)
+		writer.close()
+
+		session.executeRemoteCommand("sudo cp -f /tmp/kerub-logback.xml /etc/kerub/logback.xml")
+
+		executeOnNode(addr, "sudo cat /etc/kerub/logback.xml")
 	}
 }

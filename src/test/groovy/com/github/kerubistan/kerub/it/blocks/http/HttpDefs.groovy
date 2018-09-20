@@ -42,7 +42,14 @@ class HttpDefs {
 
 	@When("(\\S+) is set as application root")
 	void setApplicationRoot(String applicationRoot) {
-		this.applicationRoot = applicationRoot
+		def appUrlOverride = System.getProperty("kerub.ext.test.appurl")
+		if(appUrlOverride != null) {
+			scenario.write("will use the override url: $appUrlOverride")
+			this.applicationRoot = appUrlOverride
+		} else {
+			this.applicationRoot = applicationRoot
+		}
+		scenario.write("application url is now ${this.applicationRoot}")
 	}
 
 	@Given("if we wait for the url (\\S+) to respond for max (\\d+) seconds")
@@ -91,6 +98,11 @@ class HttpDefs {
 	HttpUriRequest get(String url) {
 		scenario.write("sending get to $applicationRoot/$url ")
 		return new HttpGet("$applicationRoot/$url")
+	}
+
+	HttpPost post(String url) {
+		scenario.write("sending post to $applicationRoot/$url ")
+		return new HttpPost("$applicationRoot/$url")
 	}
 
 	HttpUriRequest getSilent(String url) {

@@ -23,7 +23,7 @@ class VirtDefs {
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
-			"centos_7" : new Tuple("kerub-centos-7-all-4.qcow2", 9),
+			"centos_7" : new Tuple("kerub-centos-7-all-5.qcow2", 9),
 			"opensuse_42": new Tuple("kerub-openSUSE-42-all-1.qcow2", 13)
 	]
 
@@ -35,6 +35,7 @@ class VirtDefs {
 	final static Logger logger = LoggerFactory.getLogger(VirtDefs)
 
 	Scenario scenario
+
 
 	@Before
 	void setup(Scenario scenario) {
