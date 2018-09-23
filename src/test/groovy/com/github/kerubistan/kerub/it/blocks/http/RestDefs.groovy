@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.databind.node.ValueNode
 import com.github.kerubistan.kerub.it.blocks.tempdata.TempDefs
 import com.github.kerubistan.kerub.it.sizes.Sizes
 import cucumber.api.DataTable
-import cucumber.api.PendingException
 import cucumber.api.Scenario
 import cucumber.api.java.Before
 import cucumber.api.java.en.And
@@ -293,9 +293,9 @@ class RestDefs {
 		while(vmDyn == null && start + (1000 * toleranceSeconds) > System.currentTimeMillis()) {
 			Thread.sleep(1000)
 			def response = client.execute(HttpDefs.instance.get().get("s/r/vm-dyn/$vmId"))
-			logResponse(response)
+			def responseText = logResponse(response)
 			if(response.statusLine.statusCode == 200) {
-				vmDyn = response.entity.content.getText("ASCII")
+				vmDyn = responseText
 			}
 		}
 
@@ -311,19 +311,27 @@ class RestDefs {
 		def hostId = UUID.fromString( TempDefs.instance.get().getData(hostTempName))
 
 		def response = client.execute(HttpDefs.instance.get().get("s/r/virtual-storage-dyn/$storageId"))
-		logResponse(response)
+		def responseText = logResponse(response)
 
-		def responseJson = new ObjectMapper().readTree(response.entity.content.getText())
+		def responseJson = new ObjectMapper().readTree(responseText)
 
 		def allocation = responseJson.get("allocation")
 		//TODO
 
-		throw new PendingException("TODO")
 	}
 
 	@And("^session (\\S+): virtual machine temp:(\\S+) should be started on host temp:(\\S+)")
 	void verifyVmHost(String sessionId, String vmTempName, String hostTempName) {
-		throw new PendingException("TODO")
+		def client = Clients.instance.get().getClient(sessionId)
+		def vmId = UUID.fromString( TempDefs.instance.get().getData(vmTempName))
+		def hostId = UUID.fromString( TempDefs.instance.get().getData(hostTempName))
+
+		def response = client.execute(HttpDefs.instance.get().get("s/r/vm-dyn/$vmId"))
+		def responseTxt = logResponse(response)
+
+		def responseJson = new ObjectMapper().readTree(responseTxt)
+
+		Assert.assertEquals((responseJson["hostId"] as ValueNode).textValue(), hostId.toString())
 	}
 
 	@And("^session (\\S+): all storage technologies disabled except (\\S+)")

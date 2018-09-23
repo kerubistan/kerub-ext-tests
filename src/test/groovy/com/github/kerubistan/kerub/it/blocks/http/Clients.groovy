@@ -2,6 +2,8 @@ package com.github.kerubistan.kerub.it.blocks.http
 
 import cucumber.api.java.After
 import org.apache.http.client.HttpClient
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.HttpClients
 import org.junit.Assert
 import org.junit.Before
@@ -24,6 +26,16 @@ class Clients {
 	HttpClient getClient(String clientId) {
 		def client = clients.get(clientId)
 		if(client == null) {
+			HttpClientBuilder.create()
+					.setUserAgent("Kerub External Tests")
+					.setDefaultRequestConfig(
+						RequestConfig.custom()
+								.setConnectTimeout(100)
+								.setSocketTimeout(100000)
+								.setConnectionRequestTimeout(100000)
+								.build()
+					)
+					.build()
 			client = new Tuple(HttpClients.createDefault(), null)
 			clients.put(clientId, client)
 		}
