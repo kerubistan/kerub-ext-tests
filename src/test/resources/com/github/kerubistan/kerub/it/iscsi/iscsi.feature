@@ -15,7 +15,7 @@ Feature: The worst palindrome
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 512 MiB            |
+	  | ram  | 1024 MiB           |
 	And virtual machine host-1
 	  | mac        | 00:00:00:00:02:01 |
 	  | net        | kerub-net-1       |
@@ -29,11 +29,16 @@ Feature: The worst palindrome
 	  | ram  | 2048 MiB          |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
+	  | 192.168.123.31 | /etc/tgt/conf.d/*        |
+	  | 192.168.123.31 | /var/log/messages        |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
+	And kerub logger update on 192.168.123.11, root is info level
+	  | com.github.kerubistan.kerub                  | debug |
+	  | org.apache.sshd.client.session.ClientSession | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And command executed on 192.168.123.31:sudo lvm vgcreate kerub-storage /dev/vdb
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
@@ -49,9 +54,23 @@ Feature: The worst palindrome
 	And session 1: host identified by key host-1-id should have lvm storage capability registered with size around 1TB +-50GB
 	  | property        | expected value |
 	  | volumeGroupName | kerub-storage  |
-	And I have to finish this story
+	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
+	And session 1: user can create a disk with size 20GB - generated id into into temp:disk-id
+	And session 1: user can create a vm - generated id into into temp:vm-id
+	  | param      | value         |
+	  | storage-1  | cdrom:iso-id  |
+	  | storage-2  | cdrom:disk-id |
+	  | memory-min | 1 GB          |
+	  | memory-max | 1 GB          |
+	And session 1: user can start the VM temp:vm-id
+	And session 1: the virtual machine temp:vm-id should start - tolerate 60 second delay
+	# since there is no physical storage elsewhere
+	And session 1: storage temp:disk-id should be allocated on host temp:host-1-id
+	And session 1: storage temp:iso-id should be allocated on host temp:host-1-id
+	# since there is no sufficient memory elsewhere
+	And session 1: virtual machine temp:vm-id should be started on host temp:host-2-id
 
 	Examples:
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
-	  | centos_7         | opensuse_42 |
+#	  | centos_7         | opensuse_42 |
