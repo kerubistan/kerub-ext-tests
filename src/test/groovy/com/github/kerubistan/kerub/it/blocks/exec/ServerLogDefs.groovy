@@ -11,7 +11,7 @@ class ServerLogDefs {
 
 	Scenario scenario  = null
 
-	Map<String, String> logFiles = new HashMap<>()
+	List<Tuple> logFiles = new ArrayList<>()
 
 	@Before
 	void setScenario(Scenario scenario) {
@@ -21,19 +21,21 @@ class ServerLogDefs {
 	@Given("we will attach the following log files at the end of the scenario")
 	void attachLogFiles(DataTable table) {
 		table.gherkinRows.forEach {
-			logFiles.put(it.cells[0], it.cells[1])
+			logFiles.add(new Tuple(it.cells[0], it.cells[1]))
 		}
 	}
 
 	@After(order = Integer.MAX_VALUE)
 	void getLogs() {
 		def client = SshUtil.createSshClient()
-		logFiles.entrySet().forEach {
-			def session = SshUtil.loginWithTestUser(client, it.key)
+		logFiles.forEach {
+			def host = it.get(0).toString()
+			def files = it.get(1)
+			def session = SshUtil.loginWithTestUser(client, host)
 
-			scenario.write("attaching ${it.key}:${it.value}")
+			scenario.write("attaching ${host}:${files}")
 			scenario.embed(
-					session.executeRemoteCommand("sudo cat ${it.value}").getBytes("UTF-16"),
+					session.executeRemoteCommand("sudo cat ${files}").getBytes("UTF-16"),
 					"text/plain"
 			)
 		}
