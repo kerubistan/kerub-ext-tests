@@ -7,6 +7,8 @@ import cucumber.api.java.After
 import cucumber.api.java.Before
 import cucumber.api.java.en.Given
 
+import java.rmi.RemoteException
+
 class ServerLogDefs {
 
 	Scenario scenario  = null
@@ -33,11 +35,17 @@ class ServerLogDefs {
 			def files = it.get(1)
 			def session = SshUtil.loginWithTestUser(client, host)
 
-			scenario.write("attaching ${host}:${files}")
-			scenario.embed(
-					session.executeRemoteCommand("sudo cat ${files}").getBytes("UTF-16"),
-					"text/plain"
-			)
+			try {
+				scenario.write("attaching ${host}:${files}")
+				scenario.embed(
+						session.executeRemoteCommand("sudo cat -n ${files}").getBytes("UTF-16"),
+						"text/plain"
+				)
+				session.close()
+
+			} catch (RemoteException re) {
+				scenario.write("ERROR: problem attaching $files - ${re.message}")
+			}
 		}
 		client.stop()
 	}
