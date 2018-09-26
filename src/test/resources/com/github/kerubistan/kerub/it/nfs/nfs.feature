@@ -13,7 +13,7 @@ Feature: Nightmare Filesystem
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 512 MiB            |
+	  | ram  | 1024 MiB           |
 	And virtual machine host-1
 	  | mac        | 00:00:00:00:02:01 |
 	  | net        | kerub-net-1       |
@@ -27,11 +27,15 @@ Feature: Nightmare Filesystem
 	  | ram  | 2048 MiB          |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
+	  | 192.168.123.31 | /etc/exports             |
+	  | 192.168.123.32 | /etc/exports             |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
+	And kerub logger update on 192.168.123.11, root is info level
+	  | com.github.kerubistan.kerub | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And command executed on 192.168.123.31:sudo mkfs.ext4 -F /dev/vdb
 	And command executed on 192.168.123.31:sudo mkdir /kerub
@@ -40,6 +44,7 @@ Feature: Nightmare Filesystem
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
+	And session 1: all storage technologies disabled except nfs
 	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
@@ -47,14 +52,30 @@ Feature: Nightmare Filesystem
 	And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
 	And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pk
 	And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pk and store ID in temp host-2-id
-	And session 1: host identified by key host-1-id should have fs storage capability registered with size around 1TB +-50GB
+	And session 1: host identified by key host-1-id should have fs storage capability registered with size around 1TB +-75GB
 	  | property   | expected value |
 	  | mountPoint | /kerub         |
 	  | fsType     | ext4           |
+	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
+	And session 1: user can create a disk with size 20GB - generated id into into temp:disk-id
+	And session 1: user can create a vm - generated id into into temp:vm-id
+	  | param      | value         |
+	  | storage-1  | cdrom:iso-id  |
+	  | storage-2  | cdrom:disk-id |
+	  | memory-min | 1 GB          |
+	  | memory-max | 1 GB          |
+	And session 1: user can start the VM temp:vm-id
+	And session 1: the virtual machine temp:vm-id should start - tolerate 60 second delay
+	# since there is no physical storage elsewhere
+	And session 1: storage temp:disk-id should be allocated on host temp:host-1-id
+	And session 1: storage temp:iso-id should be allocated on host temp:host-1-id
+	# since there is no sufficient memory elsewhere
+	And session 1: virtual machine temp:vm-id should be started on host temp:host-2-id
+
 	And I have to finish this story
 
 
 	Examples:
-	  | controller-image | host-image  |
-	  | centos_7         | centos_7    |
-	  | centos_7         | opensuse_42 |
+	  | controller-image | host-image |
+	  | centos_7         | centos_7   |
+#	  | centos_7         | opensuse_42 |
