@@ -14,6 +14,7 @@ import freemarker.cache.StringTemplateLoader
 import freemarker.template.Configuration
 import freemarker.template.Template
 import org.apache.commons.io.IOUtils
+import org.apache.sshd.common.SshException
 import org.apache.sshd.common.scp.ScpTimestamp
 
 import java.nio.charset.Charset
@@ -199,13 +200,21 @@ class ExecDefs {
 				params
 		)
 
-
-
-		def sftpClient = session.createSftpClient()
-		def output = sftpClient. write("/tmp/kerub-logback.xml")
-		def writer = output.newWriter()
-		writer.write(loggerConfig)
-		writer.close()
+		def success = false
+		def cntr = 0
+		while(!success && cntr < 10) {
+			cntr ++
+			try {
+				def sftpClient = session.createSftpClient()
+				def output = sftpClient. write("/tmp/kerub-logback.xml")
+				def writer = output.newWriter()
+				writer.write(loggerConfig)
+				writer.close()
+				success = true
+			} catch(SshException sshe) {
+				scenario.write("no luck "+ sshe.message)
+			}
+		}
 
 		session.executeRemoteCommand("sudo cp -f /tmp/kerub-logback.xml /etc/kerub/logback.xml")
 
