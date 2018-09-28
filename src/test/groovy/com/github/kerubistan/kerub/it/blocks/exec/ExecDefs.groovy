@@ -73,6 +73,7 @@ class ExecDefs {
 
 		def err = new ByteArrayOutputStream()
 		def out = new ByteArrayOutputStream()
+		scenario.write("remote command on $nodeAddress: $command")
 		try {
 			session.executeRemoteCommand(command, out, err, Charset.forName("UTF-16"))
 		} catch(RemoteException re) {
@@ -220,4 +221,15 @@ class ExecDefs {
 
 		executeOnNode(addr, "sudo cat /etc/kerub/logback.xml")
 	}
+
+	@And("we fetch basic linux host info from (\\S+)")
+	void basicUnixHostInfo(String hostAddr) {
+		executeOnNode(hostAddr, "cat -n /proc/cpuinfo")
+		executeOnNode(hostAddr, "cat -n /proc/meminfo")
+		executeOnNode(hostAddr, "df -h")
+		executeOnNode(hostAddr, "lsblk")
+		executeOnNode(hostAddr, "uname -a")
+		executeOnNode(hostAddr, "lspci")
+	}
+
 }
