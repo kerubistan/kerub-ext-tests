@@ -334,6 +334,17 @@ class RestDefs {
 		Assert.assertEquals((responseJson["hostId"] as ValueNode).textValue(), hostId.toString())
 	}
 
+	@And("^session (\\S+): lvm volume group name pattern:(.*)")
+	void setLvmPattern(String sessionId, String pattern) {
+		def client = Clients.instance.get().getClient(sessionId)
+
+		def response = client.execute(HttpDefs.instance.get().get("s/r/config"))
+		def jsonConfig = new ObjectMapper().readTree(logResponse(response))
+		def storageTechnologies = jsonConfig["storageTechnologies"] as ObjectNode
+		storageTechnologies
+		//TODO
+	}
+
 	@And("^session (\\S+): all storage technologies disabled except (\\S+)")
 	void disableStorageTechnologies(String sessionId, String enabledStorageTechnologies) throws Throwable {
 		def client = Clients.instance.get().getClient(sessionId)
