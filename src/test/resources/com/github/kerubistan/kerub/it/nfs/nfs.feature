@@ -32,10 +32,13 @@ Feature: Nightmare Filesystem
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
+	And we fetch basic linux host info from 192.168.123.31
+	And we fetch basic linux host info from 192.168.123.32
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level
-	  | com.github.kerubistan.kerub | debug |
+	  | com.github.kerubistan.kerub                  | debug |
+	  | org.apache.sshd.client.session.ClientSession | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And command executed on 192.168.123.31:sudo mkfs.ext4 -F /dev/vdb
 	And command executed on 192.168.123.31:sudo mkdir /kerub
@@ -45,6 +48,7 @@ Feature: Nightmare Filesystem
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
 	And session 1: all storage technologies disabled except nfs
+	And session 1: lvm volume group name pattern: kerub-.*
 	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
