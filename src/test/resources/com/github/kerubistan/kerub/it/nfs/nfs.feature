@@ -76,10 +76,7 @@ Feature: Nightmare Filesystem
 	# since there is no sufficient memory elsewhere
 	And session 1: virtual machine temp:vm-id should be started on host temp:host-2-id
 
-	And I have to finish this story
-
-
 	Examples:
-	  | controller-image | host-image |
-	  | centos_7         | centos_7   |
-#	  | centos_7         | opensuse_42 |
+	  | controller-image | host-image  |
+	  | centos_7         | centos_7    |
+	  | centos_7         | opensuse_42 |
