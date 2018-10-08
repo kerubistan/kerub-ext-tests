@@ -11,7 +11,7 @@ Feature: Kerub host stories
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 1024 MiB            |
+	  | ram  | 1024 MiB           |
 	And virtual machine host-1
 	  | mac  | 00:00:00:00:02:01 |
 	  | net  | kerub-net-1       |
@@ -37,7 +37,8 @@ Feature: Kerub host stories
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level
-	  | com.github.kerubistan.kerub | debug |
+	  | com.github.kerubistan.kerub                  | debug |
+	  | org.apache.sshd.client.session.ClientSession | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
