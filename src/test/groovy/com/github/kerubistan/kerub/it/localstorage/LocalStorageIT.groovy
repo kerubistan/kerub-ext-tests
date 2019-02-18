@@ -20,7 +20,8 @@ import org.junit.runner.RunWith
 				"classpath:com.github.kerubistan.kerub.it.blocks.wip"
 		],
 		plugin = [
-				"pretty", "html:build/reports/cucumber/localstorage", "json:build/reports/cucumber/localstorage.json"
+				"pretty", "html:build/reports/cucumber/localstorage", "json:build/reports/cucumber/localstorage.json",
+				"pretty:build/reports/cucumber/localstorage/cucumber.txt"
 		]
 )
 class LocalStorageIT {

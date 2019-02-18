@@ -21,7 +21,8 @@ import org.junit.runner.RunWith
 				"classpath:com.github.kerubistan.kerub.it.blocks.wip"
 		],
 		plugin = [
-				"pretty", "html:build/reports/cucumber/nfs", "json:build/reports/cucumber/nfs.json"
+				"pretty", "html:build/reports/cucumber/nfs", "json:build/reports/cucumber/nfs.json",
+				"pretty:build/reports/cucumber/nfs.txt"
 		]
 )
 class NfsIT {
