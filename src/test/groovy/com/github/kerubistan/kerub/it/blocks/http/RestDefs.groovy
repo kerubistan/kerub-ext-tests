@@ -38,7 +38,7 @@ class RestDefs {
 	void downloadAndSetSshKey(String sessionId, String tempName) {
 		def client = Clients.instance.get().getClient(sessionId)
 		def response = client.execute(HttpDefs.instance.get().get("/s/r/host/helpers/controller-pubkey"))
-		Assert.assertEquals(200, response.getStatusLine().statusCode)
+		assertResponseStatus(response, 200)
 		def text = response.entity.content.getText().trim().with { it.substring(0, it.indexOf("#")) }
 		scenario.write("controller public key:\n $text")
 		TempDefs.instance.get().setData(tempName, text)
@@ -49,7 +49,7 @@ class RestDefs {
 		def client = Clients.instance.get().getClient(sessionId)
 		def response = client.execute(HttpDefs.instance.get().get("/s/r/host/helpers/pubkey?address=$address"))
 
-		Assert.assertEquals(200, response.getStatusLine().statusCode)
+		assertResponseStatus(response, 200)
 		def text = response.entity.content.getText()
 		scenario.write("public key: $text")
 		def tree = new ObjectMapper().readTree(text)
@@ -69,7 +69,7 @@ class RestDefs {
 				System.currentTimeMillis() - start < timeoutSecs * 1000
 						&& (tree == null || tree.get("result").any { it.get("capabilities") == null })) {
 			def response = client.execute(HttpDefs.instance.get().get("/s/r/host"))
-			Assert.assertEquals(200, response.statusLine.statusCode)
+			assertResponseStatus(response, 200)
 			tree = new ObjectMapper().readTree(response.entity.content)
 			response.entity.content.close()
 		}
@@ -108,7 +108,7 @@ class RestDefs {
 		def responseText = response.entity.content.getText("ASCII")
 		scenario.write("status:" + response.getStatusLine())
 		scenario.write("response:" + responseText)
-		Assert.assertEquals(200, response.getStatusLine().statusCode)
+		assertResponseStatus(response, 200)
 		def host = new ObjectMapper().readTree(responseText)
 
 		TempDefs.instance.get().setData(tempName, hostId.toString())
@@ -178,6 +178,7 @@ class RestDefs {
 		""".stripMargin())
 		def putResponse = client.execute(put)
 		logResponse(putResponse)
+		assertResponseStatus(putResponse, 200)
 
 		def post = HttpDefs.instance.get().post("s/r/virtual-storage/load/$format/$id")
 		// TODO: how the FUCK do I form upload and multipart with this library?
@@ -214,6 +215,7 @@ class RestDefs {
 		TempDefs.instance.get().setData(tempName, id.toString())
 		def response = client.execute(put)
 		logResponse(response)
+		assertResponseStatus(response, 200)
 
 	}
 
@@ -258,7 +260,12 @@ class RestDefs {
 
 		def response = client.execute(put)
 		logResponse(response)
+		assertResponseStatus(response, 200)
 		TempDefs.instance.get().setData(tempName, id.toString())
+	}
+
+	static def assertResponseStatus(HttpResponse httpResponse, int code) {
+		Assert.assertEquals("Expected response code $code", code, httpResponse.statusLine.statusCode)
 	}
 
 	private String logResponse(HttpResponse response) {
@@ -281,6 +288,7 @@ class RestDefs {
 		def response = client.execute(HttpDefs.instance.get().post("s/r/vm/$vmId/start"))
 
 		logResponse(response)
+		assertResponseStatus(response, 200)
 	}
 
 	@And("^session (\\S+): the virtual machine temp:(\\S+) should start - tolerate (\\d+) second delay")
