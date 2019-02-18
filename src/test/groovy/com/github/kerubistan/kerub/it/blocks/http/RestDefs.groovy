@@ -237,7 +237,7 @@ class RestDefs {
 					{
 						"virtualStorageId" : "${TempDefs.instance.get().getData(deviceTemp)}",
 						"device" : "${device}",
-						"bus" : "virtio"
+						"bus" : "${ device == "cdrom" ? "sata" : "virtio" }"
 					}
 					"""
 			}
