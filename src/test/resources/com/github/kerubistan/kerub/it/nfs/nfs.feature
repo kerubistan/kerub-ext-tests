@@ -65,7 +65,7 @@ Feature: Nightmare Filesystem
 	And session 1: user can create a vm - generated id into into temp:vm-id
 	  | param      | value         |
 	  | storage-1  | cdrom:iso-id  |
-	  | storage-2  | cdrom:disk-id |
+	  | storage-2  | disk:disk-id |
 	  | memory-min | 1 GB          |
 	  | memory-max | 1 GB          |
 	And session 1: user can start the VM temp:vm-id

@@ -44,11 +44,11 @@ Feature: Local storage
 	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
 	And session 1: user can create a disk with size 10GB - generated id into into temp:disk-id
 	And session 1: user can create a vm - generated id into into temp:vm-id
-	  | param      | value         |
-	  | storage-1  | cdrom:iso-id  |
-	  | storage-2  | cdrom:disk-id |
-	  | memory-min | 1 GB          |
-	  | memory-max | 1 GB          |
+	  | param      | value        |
+	  | storage-1  | cdrom:iso-id |
+	  | storage-2  | disk:disk-id |
+	  | memory-min | 1 GB         |
+	  | memory-max | 1 GB         |
 	And session 1: user can start the VM temp:vm-id
 	And session 1: the virtual machine temp:vm-id should start - tolerate 60 second delay
 	# since there is no physical storage elsewhere
@@ -109,11 +109,11 @@ Feature: Local storage
 	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
 	And session 1: user can create a disk with size 10GB - generated id into into temp:disk-id
 	And session 1: user can create a vm - generated id into into temp:vm-id
-	  | param      | value         |
-	  | storage-1  | cdrom:iso-id  |
-	  | storage-2  | cdrom:disk-id |
-	  | memory-min | 1 GB          |
-	  | memory-max | 1 GB          |
+	  | param      | value        |
+	  | storage-1  | cdrom:iso-id |
+	  | storage-2  | disk:disk-id |
+	  | memory-min | 1 GB         |
+	  | memory-max | 1 GB         |
 	And session 1: user can start the VM temp:vm-id
 	And session 1: the virtual machine temp:vm-id should start - tolerate 60 second delay
 	# since there is no physical storage elsewhere
