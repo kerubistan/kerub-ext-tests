@@ -98,14 +98,16 @@ class VirtDefs {
 
 		GString vmDisk = createVmDisk(id, disk)
 
+		def busCntr = 9
 		def extraDisks = ""
-		if (params.containsKey("extra-disk")) {
-			extraDisks = """
+		for(def key: params.keySet().findAll { it.startsWith("extra-disk:") }) {
+			def target = key.replaceAll("extra-disk:","")
+			extraDisks += """
 				<disk type='file' device='disk'>
 					<driver name='qemu' type='raw'/>
-					<source file='$home/${params['extra-disk']}'/>
-					<target dev='vdb' bus='virtio'/>
-					<address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+					<source file='$home/${params[key]}'/>
+					<target dev='$target' bus='virtio'/>
+					<address type='pci' domain='0x0000' bus='0x00' slot='0x${Integer.toHexString(busCntr++)}' function='0x0'/>
 				</disk>
 			""".stripMargin()
 		}

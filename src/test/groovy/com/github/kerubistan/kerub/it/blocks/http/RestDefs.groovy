@@ -15,6 +15,7 @@ import cucumber.api.java.Before
 import cucumber.api.java.en.And
 import cucumber.api.java.en.Given
 import cucumber.api.java.en.Then
+import gherkin.formatter.model.DataTableRow
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.input.CountingInputStream
 import org.apache.commons.io.output.NullOutputStream
@@ -200,15 +201,21 @@ class RestDefs {
 
 	@And("^session (\\S+): user can create a disk with size (\\S+) - generated id into into temp:(\\S+)")
 	void createDisk(String sessionId, String sizeSpec, String tempName) {
+		createDiskWithExpectation(sessionId, sizeSpec, tempName, DataTable.create(Collections.emptyList()))
+	}
+
+	@And("^session (\\S+): user can create a disk with size (\\S+) - generated id into into temp (\\S+) with expectations")
+	void createDiskWithExpectation(String sessionId, String sizeSpec, String tempName, DataTable expectations) {
 		def client = Clients.instance.get().getClient(sessionId)
 		def id = UUID.randomUUID()
 
 		def put = HttpDefs.instance.get().put("s/r/virtual-storage", """
 		{
-			"@type":"virtual-storage",
-			"id" : "$id",
-			"name" : "disk-$id",
-			"size" : "${Sizes.toSize(sizeSpec)}"
+			"@type"			:"virtual-storage",
+			"id"			: "$id",
+			"name"			: "disk-$id",
+			"size" 			: "${Sizes.toSize(sizeSpec)}",
+			"expectations"	: ${expectationsToJson(expectations)}
 		}
 		""".stripMargin())
 
@@ -217,6 +224,26 @@ class RestDefs {
 		logResponse(response)
 		assertResponseStatus(response, 200)
 
+	}
+
+	static String expectationsToJson(DataTable expectations) {
+		StringBuilder builder = new StringBuilder('[')
+
+		if(expectations.gherkinRows.size() > 1) {
+			def rows = expectations.gherkinRows.subList(1, expectations.gherkinRows.size())
+			def first = true
+			for(DataTableRow row : rows) {
+				def type = row.cells[0]
+				def atts = row.cells[1]
+				if(!first) {
+					builder.append(',')
+				}
+				builder.append(""" { "@type":"$type", $atts } """)
+			}
+		}
+
+		builder.append(']')
+		return builder.toString()
 	}
 
 	@And("^session (\\S+): user can create a vm - generated id into into temp:(\\S+)")
@@ -288,7 +315,7 @@ class RestDefs {
 		def response = client.execute(HttpDefs.instance.get().post("s/r/vm/$vmId/start"))
 
 		logResponse(response)
-		assertResponseStatus(response, 200)
+		assertResponseStatus(response, 204)
 	}
 
 	@And("^session (\\S+): the virtual machine temp:(\\S+) should start - tolerate (\\d+) second delay")

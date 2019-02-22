@@ -17,11 +17,11 @@ Feature: The worst palindrome
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac        | 00:00:00:00:02:01 |
-	  | net        | kerub-net-1       |
-	  | disk       | <host-image>      |
-	  | ram        | 512 MiB           |
-	  | extra-disk | host-1-disk-1     |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 512 MiB           |
+	  | extra-disk:vdb | host-1-disk-1     |
 	And virtual machine host-2
 	  | mac  | 00:00:00:00:02:02 |
 	  | net  | kerub-net-1       |

@@ -15,11 +15,11 @@ Feature: Nightmare Filesystem
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac        | 00:00:00:00:02:01 |
-	  | net        | kerub-net-1       |
-	  | disk       | <host-image>      |
-	  | ram        | 512 MiB           |
-	  | extra-disk | host-1-disk-1     |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 512 MiB           |
+	  | extra-disk:vdb | host-1-disk-1     |
 	And virtual machine host-2
 	  | mac  | 00:00:00:00:02:02 |
 	  | net  | kerub-net-1       |
@@ -63,11 +63,11 @@ Feature: Nightmare Filesystem
 	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
 	And session 1: user can create a disk with size 20GB - generated id into into temp:disk-id
 	And session 1: user can create a vm - generated id into into temp:vm-id
-	  | param      | value         |
-	  | storage-1  | cdrom:iso-id  |
+	  | param      | value        |
+	  | storage-1  | cdrom:iso-id |
 	  | storage-2  | disk:disk-id |
-	  | memory-min | 1 GB          |
-	  | memory-max | 1 GB          |
+	  | memory-min | 1 GB         |
+	  | memory-max | 1 GB         |
 	And session 1: user can start the VM temp:vm-id
 	And session 1: the virtual machine temp:vm-id should start - tolerate 60 second delay
 	# since there is no physical storage elsewhere
