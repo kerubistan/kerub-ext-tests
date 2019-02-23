@@ -73,7 +73,16 @@ class VirtDefs {
 		logger.info("network xml:\n {}", networkXml)
 		scenario.write(networkXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
 		vnets.put(name, id)
+		connect.listNetworks().each {
+			if(it == name) {
+				scenario.println("oops- there is a left-behind network " + name + " destroying it...")
+				connect.networkLookupByName(name).destroy()
+				scenario.println("network " + name + " destroyed")
+			}
+		}
+		scenario.println("defining the new network")
 		connect.networkCreateXML(networkXml)
+		scenario.println("done")
 	}
 
 	@Given("virtual disks")
