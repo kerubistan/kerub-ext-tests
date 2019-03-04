@@ -14,10 +14,10 @@ Feature: Local storage
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac        | 00:00:00:00:02:01 |
-	  | net        | kerub-net-1       |
-	  | disk       | <host-image>      |
-	  | ram        | 2048 MiB          |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 2048 MiB          |
 	  | extra-disk:vdb | host-1-disk-1     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
@@ -79,10 +79,10 @@ Feature: Local storage
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac        | 00:00:00:00:02:01 |
-	  | net        | kerub-net-1       |
-	  | disk       | <host-image>      |
-	  | ram        | 2048 MiB          |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 2048 MiB          |
 	  | extra-disk:vdb | host-1-disk-1     |
 	  | extra-disk:vdd | host-1-disk-2     |
 	  | extra-disk:vde | host-1-disk-3     |
@@ -147,10 +147,10 @@ Feature: Local storage
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac        | 00:00:00:00:02:01 |
-	  | net        | kerub-net-1       |
-	  | disk       | <host-image>      |
-	  | ram        | 2048 MiB          |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 2048 MiB          |
 	  | extra-disk:vdb | host-1-disk-1     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
