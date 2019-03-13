@@ -72,4 +72,4 @@ Feature: Storage migration
 	Examples:
 	  | controller-image | host-image |
 	  | centos_7         | centos_7   |
-#	  | centos_7         | opensuse_42 |
+	  | centos_7         | opensuse_42 |
