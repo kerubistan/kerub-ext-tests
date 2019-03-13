@@ -161,10 +161,11 @@ class RestDefs {
 		return true
 	}
 
-	@And("^session (\\S+): user can upload a (\\S+) file (\\S+) - generated id into into temp:(\\S+)")
-	void uploadAFile(String sessionId, String format, String fileName, String tempName) throws Throwable {
+	@And("^session (\\S+): user can upload a (ro|rw)?\\s*(\\S+) file (\\S+) - generated id into into temp:(\\S+)")
+	void uploadAFile(String sessionId, String readOnlyStr, String format, String fileName, String tempName) throws Throwable {
 		def client = Clients.instance.get().getClient(sessionId)
 		def id = UUID.randomUUID()
+		def readOnly = "ro" == readOnlyStr
 
 		def size = IOUtils.copy(new GZIPInputStream(
 				Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
@@ -174,7 +175,8 @@ class RestDefs {
 			"@type":"virtual-storage",
 			"id" : "$id",
 			"name" : "$fileName",
-			"size" : "$size"
+			"size" : "$size",
+			"readOnly" : $readOnly
 		}
 		""".stripMargin())
 		def putResponse = client.execute(put)
