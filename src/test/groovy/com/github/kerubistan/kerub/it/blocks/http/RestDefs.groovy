@@ -40,7 +40,7 @@ class RestDefs {
 		def client = Clients.instance.get().getClient(sessionId)
 		def response = client.execute(HttpDefs.instance.get().get("/s/r/host/helpers/controller-pubkey"))
 		assertResponseStatus(response, 200)
-		def text = response.entity.content.getText().trim().with { it.substring(0, it.indexOf("#")) }
+		def text = response.entity.content.getText()
 		scenario.write("controller public key:\n $text")
 		TempDefs.instance.get().setData(tempName, text)
 	}
@@ -408,4 +408,63 @@ class RestDefs {
 		final def updateResponse = client.execute(put)
 		logResponse(updateResponse)
 	}
+
+	@And("session (\\S+): recycle host by temp id (\\S+)")
+	void setHostRecycle(String sessionId, String hostTempId) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def hostId = TempDefs.instance.get().getData(hostTempId)
+		def response = client.execute(HttpDefs.instance.get().get("s/r/host/$hostId"))
+
+
+		def hostJsonTxt = logResponse(response)
+		assertResponseStatus(response, 200)
+		def mapper = new ObjectMapper()
+		def jsonTree = mapper.readTree(hostJsonTxt) as ObjectNode
+		jsonTree.put("recycling",true)
+		def updateJson = mapper.writeValueAsString(jsonTree)
+
+		def updateResponse = client.execute(HttpDefs.instance.get().post("s/r/host/$hostId", updateJson))
+		logResponse(updateResponse)
+	}
+
+	@And("session (\\d+): virtual storage temp:(\\S+) should migrate to host temp:(\\S+) within (\\d+) seconds")
+	def verifyStorageMigratedToHost(String sessionId, String storageTempId, String hostTempId, int seconds) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def storageId = TempDefs.instance.get().getData(storageTempId)
+		def hostId = TempDefs.instance.get().getData(hostTempId)
+		def start = System.currentTimeMillis()
+
+		while(System.currentTimeMillis() < start + (seconds * 1000)) {
+
+			def response = client.execute(HttpDefs.instance.get().get("s/r/virtual-storage-dyn/$storageId"))
+			def responseJson = logResponse(response)
+			if(response.statusLine.statusCode == 200 && responseJson.contains(hostId)) {
+				scenario.write("ok, that's what we were looking for")
+				return
+			}
+
+			sleep(1000)
+		}
+
+		Assert.fail("migration did not happen in $seconds seconds")
+	}
+
+	@And("session (\\d+): and host temp:(\\S+) must be recycled within (\\d+) seconds")
+	def verifyHostRecycled(String sessionId, String hostTempId, int seconds) {
+		def client = Clients.instance.get().getClient(sessionId)
+		def hostId = TempDefs.instance.get().getData(hostTempId)
+		def start = System.currentTimeMillis()
+
+		while (System.currentTimeMillis() < start + (seconds * 1000)) {
+			def response = client.execute(HttpDefs.instance.get().get("s/r/host/$hostId"))
+			logResponse(response)
+			if(response.statusLine.statusCode == 404) {
+				scenario.write("got 404 - meaning the host was recycled")
+				return
+			}
+		}
+
+		Assert.fail("recycling did not happen in $seconds seconds")
+	}
+
 }
