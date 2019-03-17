@@ -63,4 +63,5 @@ Feature: Kerub host stories
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | freebsd_12  |
+	  | centos_7         | freebsd_11  |
 	  | opensuse_42      | opensuse_42 |
