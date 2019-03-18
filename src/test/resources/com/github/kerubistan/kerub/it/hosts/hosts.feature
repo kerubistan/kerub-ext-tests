@@ -7,26 +7,40 @@ Feature: Kerub host stories
 	  | host-1           | 00:00:00:00:02:01 | 192.168.123.31 |
 	  | host-2           | 00:00:00:00:02:02 | 192.168.123.32 |
 	  | host-3           | 00:00:00:00:02:03 | 192.168.123.33 |
+	And virtual disks
+	  | name          | size |
+	  | host-1-disk-1 | 1 TB |
+	  | host-1-disk-2 | 1 TB |
+	  | host-2-disk-1 | 1 TB |
+	  | host-2-disk-2 | 1 TB |
+	  | host-3-disk-1 | 1 TB |
+	  | host-3-disk-2 | 1 TB |
 	And virtual machine kerub-controller
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB           |
 	And virtual machine host-1
-	  | mac  | 00:00:00:00:02:01 |
-	  | net  | kerub-net-1       |
-	  | disk | <host-image>      |
-	  | ram  | 512 MiB           |
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 512 MiB           |
+	  | extra-disk:vdb | host-1-disk-1     |
+	  | extra-disk:vdc | host-1-disk-2     |
 	And virtual machine host-2
-	  | mac  | 00:00:00:00:02:02 |
-	  | net  | kerub-net-1       |
-	  | disk | <host-image>      |
-	  | ram  | 512 MiB           |
+	  | mac            | 00:00:00:00:02:02 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 512 MiB           |
+	  | extra-disk:vdb | host-2-disk-1     |
+	  | extra-disk:vdc | host-2-disk-2     |
 	And virtual machine host-3
-	  | mac  | 00:00:00:00:02:03 |
-	  | net  | kerub-net-1       |
-	  | disk | <host-image>      |
-	  | ram  | 512 MiB           |
+	  | mac            | 00:00:00:00:02:03 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 512 MiB           |
+	  | extra-disk:vdb | host-3-disk-1     |
+	  | extra-disk:vdc | host-3-disk-2     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
 	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
@@ -45,8 +59,13 @@ Feature: Kerub host stories
 	Then session 1: user can login with admin password password
 	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
+	And command executed on 192.168.123.31: <lsblk>
+	And command executed on 192.168.123.31: <fs-setup>
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
+	And command executed on 192.168.123.32: <lsblk>
+	And command executed on 192.168.123.32: <volume-setup>
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.33
+	And command executed on 192.168.123.33: <lsblk>
 	And session 1: user can fetch public key for 192.168.123.31 into temp host-1-pubkey
 	And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pubkey
 	And session 1: user can fetch public key for 192.168.123.33 into temp host-3-pubkey
@@ -60,8 +79,8 @@ Feature: Kerub host stories
 	  | host.capabilities will be non-null |
 
 	Examples:
-	  | controller-image | host-image  |
-	  | centos_7         | centos_7    |
-	  | centos_7         | freebsd_12  |
-	  | centos_7         | freebsd_11  |
-	  | opensuse_42      | opensuse_42 |
+	  | controller-image | host-image  | lsblk          | fs-setup                                                                         | volume-setup                                                                                           |
+	  | centos_7         | centos_7    | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
+	  | opensuse_42      | opensuse_42 | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
+	  | centos_7         | freebsd_12  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |
+	  | centos_7         | freebsd_11  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |
