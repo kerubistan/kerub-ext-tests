@@ -95,6 +95,7 @@ class VirtDefs {
 		for(def row in list.subList(1, list.size())) {
 			def diskName = row.get(0)
 			def diskSize = Sizes.toSize(row.get(1))
+			session.executeRemoteCommand("rm -f $diskName")
 			session.executeRemoteCommand("truncate -s $diskSize $diskName && chmod 777 $diskName")
 			vmDisks.add(diskName)
 		}
