@@ -1,6 +1,6 @@
 Feature: Storage migration
 
-  Scenario Outline: LVM to LVM migration
+  Scenario Outline: LVM to LVM migration (<host-image>)
 	Given virtual network kerub-net-1 domain name kerub.it
 	  | host             | mac               | ip             |
 	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
