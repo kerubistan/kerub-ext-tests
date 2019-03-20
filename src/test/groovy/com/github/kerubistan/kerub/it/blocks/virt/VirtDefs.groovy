@@ -13,6 +13,7 @@ import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
 import org.junit.Assert
 import org.libvirt.Connect
+import org.libvirt.LibvirtException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -104,6 +105,15 @@ class VirtDefs {
 	@Given("^virtual machine (\\S+)")
 	void createVirtualMachine(String name, DataTable details) {
 		logger.info("create vm $name")
+		try {
+			def old = connect.domainLookupByName(name)
+			if (old != null) {
+				logger.info("trying to destroy left-behind domain " + name)
+				old.destroy()
+			}
+		} catch (LibvirtException e) {
+			//this is fine
+		}
 		def id = UUID.randomUUID()
 		def params = details.asMap(String, String)
 		def disk = disks[params['disk']]
