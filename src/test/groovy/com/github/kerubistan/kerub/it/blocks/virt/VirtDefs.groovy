@@ -301,7 +301,11 @@ class VirtDefs {
 		logger.info("--- virt cleanups ---")
 		vms.entrySet().forEach {
 			logger.info("stop and remove ${it.key}")
-			connect.domainLookupByUUID(it.value).destroy()
+			try{
+				connect.domainLookupByUUID(it.value).destroy()
+			} catch (LibvirtException e) {
+				logger.info("could not shut down ${it.key} / ${it.value}", e)
+			}
 		}
 		vmDisks.forEach {
 			def session = createSshSession()
@@ -310,10 +314,19 @@ class VirtDefs {
 		}
 		vnets.entrySet().forEach {
 			logger.info("destroying network ${it.key}")
-			connect.networkLookupByUUID(it.value).destroy()
+			try {
+				connect.networkLookupByUUID(it.value).destroy()
+			} catch (LibvirtException e) {
+				logger.info("could not shut down network ${it.key} / ${it.value}", e)
+			}
 		}
 		if(connect != null) {
 			connect.close()
+			try {
+				connect.close()
+			} catch (LibvirtException e) {
+				logger.info("could not disconnect from libvirt", e)
+			}
 		}
 	}
 
