@@ -21,8 +21,8 @@ Feature: Local storage
 	  | extra-disk:vdb | host-1-disk-1     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
 	And we fetch basic linux host info from 192.168.123.31
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
@@ -89,8 +89,8 @@ Feature: Local storage
 	  | extra-disk:vdf | host-1-disk-4     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
 	And we fetch basic linux host info from 192.168.123.31
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
@@ -154,8 +154,8 @@ Feature: Local storage
 	  | extra-disk:vdb | host-1-disk-1     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level

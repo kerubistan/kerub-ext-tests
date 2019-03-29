@@ -1,10 +1,12 @@
 package com.github.kerubistan.kerub.it.blocks.hairy
 
-import cucumber.api.java.en.Given
+import cucumber.api.groovy.EN
+import cucumber.api.groovy.Hooks
 
-class WaitDefs {
-	@Given("we wait (\\d+) seconds")
-	def waitSome(Integer seconds) {
+this.metaClass.mixin(Hooks)
+this.metaClass.mixin(EN)
+
+Given(~/^we wait (\d+) seconds$/) {
+	int seconds ->
 		Thread.sleep(seconds * 1000)
-	}
 }

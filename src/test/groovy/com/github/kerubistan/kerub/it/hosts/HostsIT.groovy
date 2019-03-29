@@ -7,11 +7,12 @@ import org.junit.runner.RunWith
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [
-				"classpath:com/github/kerubistan/kerub/it/hosts/hosts.feature",
-				"classpath:com/github/kerubistan/kerub/it/hosts/updated-all.feature"
+				"classpath:com/github/kerubistan/kerub/it/hosts/hosts.feature"
+//				"classpath:com/github/kerubistan/kerub/it/hosts/updated-all.feature"
 		],
 		glue = [
 				"classpath:com.github.kerubistan.kerub.it.clustering",
+				"classpath:com.github.kerubistan.kerub.it.blocks.scenario",
 				"classpath:com.github.kerubistan.kerub.it.blocks.virt",
 				"classpath:com.github.kerubistan.kerub.it.blocks.exec",
 				"classpath:com.github.kerubistan.kerub.it.blocks.hairy",

@@ -13,6 +13,7 @@ import org.junit.runner.RunWith
 		glue = [
 				"classpath:com.github.kerubistan.kerub.it.clustering",
 				"classpath:com.github.kerubistan.kerub.it.torture",
+				"classpath:com.github.kerubistan.kerub.it.blocks.scenario",
 				"classpath:com.github.kerubistan.kerub.it.blocks.virt",
 				"classpath:com.github.kerubistan.kerub.it.blocks.exec",
 				"classpath:com.github.kerubistan.kerub.it.blocks.pack",

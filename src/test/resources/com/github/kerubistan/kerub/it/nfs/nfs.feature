@@ -29,9 +29,9 @@ Feature: Nightmare Filesystem
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
 	  | 192.168.123.31 | /etc/exports             |
 	  | 192.168.123.32 | /etc/exports             |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.32 comes online with timeout: 300 seconds
 	And we fetch basic linux host info from 192.168.123.31
 	And we fetch basic linux host info from 192.168.123.32
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp

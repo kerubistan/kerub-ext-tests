@@ -1,23 +1,16 @@
 package com.github.kerubistan.kerub.it.blocks.tempdata
 
-import cucumber.api.java.After
-import cucumber.api.java.Before
+import cucumber.api.groovy.EN
+import cucumber.api.groovy.Hooks
 
-class TempDefs {
+this.metaClass.mixin(Hooks)
+this.metaClass.mixin(EN)
 
-	static instance = new InheritableThreadLocal<TempDefs>()
+def instance = new InheritableThreadLocal<TempEnvironment>()
 
-	private values = new HashMap<String, byte[]>()
+class TempEnvironment {
 
-	@Before
-	void setup() {
-		instance.set(this)
-	}
-
-	@After
-	void cleanup() {
-		instance.remove()
-	}
+	private values = new HashMap<String, String[]>()
 
 	String getData(String key) {
 		return values.get(key)
@@ -26,4 +19,11 @@ class TempDefs {
 	void setData(String key, String data) {
 		values.put(key, data)
 	}
+
 }
+
+World {
+	instance.set(new TempEnvironment())
+	instance.get()
+}
+

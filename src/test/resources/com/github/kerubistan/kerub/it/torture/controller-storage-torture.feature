@@ -9,7 +9,7 @@ Feature: Torturing the controller storage
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
 	  | ram  | 1024 MiB            |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / install-cmd

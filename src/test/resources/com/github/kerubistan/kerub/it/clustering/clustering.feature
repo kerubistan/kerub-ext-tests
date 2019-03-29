@@ -27,10 +27,10 @@ Feature: Kerub clustering
 	  | net  | kerub-net-1       |
 	  | disk | <OS-image>        |
 	  | ram  | 512 MiB           |
-	And we wait until 192.168.123.11 comes online, timeout: 240 seconds
-	And we wait until 192.168.123.12 comes online, timeout: 240 seconds
-	And we wait until 192.168.123.21 comes online, timeout: 240 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 240 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 240 seconds
+	And we wait until 192.168.123.12 comes online with timeout: 240 seconds
+	And we wait until 192.168.123.21 comes online with timeout: 240 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 240 seconds
 	And command template executed on 192.168.123.11: <OS-image> / install-pkg-cmd
 	And command template executed on 192.168.123.12: <OS-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <OS-image> / start-cmd

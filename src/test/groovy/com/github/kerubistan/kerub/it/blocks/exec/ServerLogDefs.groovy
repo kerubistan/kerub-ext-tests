@@ -1,38 +1,38 @@
 package com.github.kerubistan.kerub.it.blocks.exec
 
 import com.github.kerubistan.kerub.it.utils.SshUtil
-import cucumber.api.DataTable
-import cucumber.api.Scenario
-import cucumber.api.java.After
-import cucumber.api.java.Before
-import cucumber.api.java.en.Given
+import cucumber.api.groovy.EN
+import cucumber.api.groovy.Hooks
+import io.cucumber.datatable.DataTable
+import org.apache.sshd.common.RuntimeSshException
 
 import java.rmi.RemoteException
 
-class ServerLogDefs {
+this.metaClass.mixin(Hooks)
+this.metaClass.mixin(EN)
 
-	Scenario scenario  = null
-
+class LogEnvironment {
 	List<Tuple> logFiles = new ArrayList<>()
+}
 
-	@Before
-	void setScenario(Scenario scenario) {
-		this.scenario = scenario
-	}
+World {
+	new LogEnvironment()
+}
 
-	@Given("we will attach the following log files at the end of the scenario")
-	void attachLogFiles(DataTable table) {
-		table.gherkinRows.forEach {
-			logFiles.add(new Tuple(it.cells[0], it.cells[1]))
+Given(~/^we will attach the following log files at the end of the scenario$/) {
+	DataTable table ->
+		def _logFiles = logFiles
+		table.cells().forEach {
+			_logFiles.add(new Tuple(it[0], it[1]))
 		}
-	}
+}
 
-	@After(order = Integer.MAX_VALUE)
-	void getLogs() {
-		def client = SshUtil.createSshClient()
-		logFiles.forEach {
-			def host = it.get(0).toString()
-			def files = it.get(1)
+After(order = Integer.MAX_VALUE) {
+	def client = SshUtil.createSshClient()
+	logFiles.forEach {
+		def host = it.get(0).toString()
+		def files = it.get(1)
+		try {
 			def session = SshUtil.loginWithTestUser(client, host)
 
 			try {
@@ -46,7 +46,10 @@ class ServerLogDefs {
 			} catch (RemoteException re) {
 				scenario.write("ERROR: problem attaching $files - ${re.message}")
 			}
+
+		} catch (RuntimeSshException sshe) {
+			scenario.write("could not get $files from $host. host is not available: ${sshe}")
 		}
-		client.stop()
 	}
+	client.stop()
 }

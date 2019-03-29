@@ -1,11 +1,12 @@
 package com.github.kerubistan.kerub.it.blocks.wip
 
 import cucumber.api.PendingException
-import cucumber.api.java.en.Then
+import cucumber.api.groovy.EN
+import cucumber.api.groovy.Hooks
 
-class WorkDefs {
-	@Then("I have to finish this story")
-	void pending() {
-		throw new PendingException("this story is unfinished")
-	}
+this.metaClass.mixin(Hooks)
+this.metaClass.mixin(EN)
+
+Then(~"I have to finish this story") {
+	throw new PendingException("this story is unfinished")
 }

@@ -31,9 +31,9 @@ Feature: The worst palindrome
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
 	  | 192.168.123.31 | /etc/tgt/conf.d/*        |
 	  | 192.168.123.31 | /var/log/messages        |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.32 comes online with timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level

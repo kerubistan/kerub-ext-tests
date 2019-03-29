@@ -11,7 +11,7 @@ Feature: The controller should be ok with restarts
 	  | ram  | 512 MiB            |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
 	And command executed on 192.168.123.11: <install-repo-cmd>
 	And command executed on 192.168.123.11: <install-cmd>
 	And command executed on 192.168.123.11: <start-cmd>

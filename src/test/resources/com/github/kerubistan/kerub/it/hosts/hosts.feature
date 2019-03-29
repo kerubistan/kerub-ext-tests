@@ -43,10 +43,13 @@ Feature: Kerub host stories
 	  | extra-disk:vdc | host-3-disk-2     |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.32 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.33 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
+	And we fetch basic <ostype> host info from 192.168.123.31
+	And we wait until 192.168.123.32 comes online with timeout: 300 seconds
+	And we fetch basic <ostype> host info from 192.168.123.32
+	And we wait until 192.168.123.33 comes online with timeout: 300 seconds
+	And we fetch basic <ostype> host info from 192.168.123.33
 	And we wait 15 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
@@ -79,8 +82,8 @@ Feature: Kerub host stories
 	  | host.capabilities will be non-null |
 
 	Examples:
-	  | controller-image | host-image  | lsblk          | fs-setup                                                                         | volume-setup                                                                                           |
-	  | centos_7         | centos_7    | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
-	  | opensuse_42      | opensuse_42 | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
-	  | centos_7         | freebsd_12  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |
-	  | centos_7         | freebsd_11  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |
+	  | controller-image | ostype | host-image  | lsblk          | fs-setup                                                                         | volume-setup                                                                                           |
+	  | centos_7         | linux  | centos_7    | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
+	  | opensuse_42      | linux  | opensuse_42 | lsblk          | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub"    | sudo vgcreate kerub-storage /dev/vdb                                                                   |
+	  | centos_7         | bsd    | freebsd_12  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |
+	  | centos_7         | bsd    | freebsd_11  | geom disk list | sudo bash -c "mkfs -t ufs /dev/vtbd2 && mkdir /kerub && mount /dev/vtbd2 /kerub" | sudo bash -c "echo drive vtbd2 device /dev/vtbd2 >> /tmp/drive.txt && gvinum create -f /tmp/drive.txt" |

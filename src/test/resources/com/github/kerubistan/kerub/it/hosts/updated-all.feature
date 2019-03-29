@@ -9,7 +9,7 @@ Feature: Kerub quick test after controller operating system update
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 1024 MiB            |
+	  | ram  | 1024 MiB           |
 	And virtual machine host-1
 	  | mac  | 00:00:00:00:02:01 |
 	  | net  | kerub-net-1       |
@@ -17,19 +17,19 @@ Feature: Kerub quick test after controller operating system update
 	  | ram  | 512 MiB           |
 	And we will attach the following log files at the end of the scenario
 	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
 	And command template executed on 192.168.123.11: <controller-image> / setup-pkg-proxy
 	And command template executed on 192.168.123.11: <controller-image> / full-update-cmd
 	And we wait 30 seconds
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
 	#TODO something wrong with the ssh connection  if we do not wait a while after reboot
 	And we wait 15 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / setup-pkg-proxy
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
-	And we wait until 192.168.123.11 comes online, timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online, timeout: 300 seconds
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
 	And command template executed on 192.168.123.31: <controller-image> / setup-pkg-proxy
 	And command template executed on 192.168.123.31: <controller-image> / install-repo-cmd
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds

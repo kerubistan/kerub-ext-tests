@@ -3,12 +3,9 @@ package com.github.kerubistan.kerub.it.blocks.virt
 import com.github.kerubistan.kerub.it.sizes.Sizes
 import com.github.kerubistan.kerub.it.utils.Environment
 import com.github.kerubistan.kerub.it.utils.SshUtil
-import cucumber.api.DataTable
-import cucumber.api.Scenario
-import cucumber.api.java.After
-import cucumber.api.java.Before
-import cucumber.api.java.en.Given
-import cucumber.api.java.en.When
+import cucumber.api.groovy.EN
+import cucumber.api.groovy.Hooks
+import io.cucumber.datatable.DataTable
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
 import org.junit.Assert
@@ -19,8 +16,10 @@ import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
 
-class VirtDefs {
+this.metaClass.mixin(Hooks)
+this.metaClass.mixin(EN)
 
+class VirtEnvironment {
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
@@ -37,25 +36,53 @@ class VirtDefs {
 
 	final static Logger logger = LoggerFactory.getLogger(VirtDefs)
 
-	Scenario scenario
+	GString createVmDisk(UUID id, Tuple disk) {
+		def session = createSshSession()
 
+		def templateImg = "$home/${disk.get(0).toString()}"
 
-	@Before
-	void setup(Scenario scenario) {
-		this.scenario = scenario
-		logger.info("--- virt setup ---")
-		def hypervisorUrl = Environment.getHypervisorUrl()
-		logger.info("connecting $hypervisorUrl")
-		connect = new Connect(hypervisorUrl)
-		logger.info("connected: {}", connect.connected)
+		session.executeRemoteCommand("qemu-img create -f qcow2 -o backing_file=$templateImg $home/${id}.qcow2")
+		session.executeRemoteCommand("chmod 777 $home/${id}.qcow2 ")
+
+		session.close()
+		vmDisks.add("$home/${id}.qcow2")
+		"${id}.qcow2"
 	}
 
-	@Given("^virtual network (\\S+) domain name (\\S+)")
-	void createVirtualNetwork(String name, String domain, DataTable nics) {
+	private static ClientSession createSshSession() {
+		def ssh = SshClient.setUpDefaultClient()
+		ssh.start()
+		def connectFuture = ssh.connect(Environment.getStorageUser(), Environment.getStorageHost(), 22)
+		connectFuture.await()
+		def session = connectFuture.getSession()
+		session.addPasswordIdentity(Environment.getStoragePassword())
+		def authFuture = session.auth()
+		authFuture.await(1, TimeUnit.SECONDS)
+		authFuture.verify()
+		session
+	}
+
+
+}
+
+World {
+	new VirtEnvironment()
+}
+
+Before {
+	logger.info("--- virt setup ---")
+	def hypervisorUrl = Environment.getHypervisorUrl()
+	logger.info("connecting $hypervisorUrl")
+	connect = new Connect(hypervisorUrl)
+	logger.info("connected: {}", connect.connected)
+}
+
+Given(~"^virtual network (\\S+) domain name (\\S+)") {
+	String name, String domain, DataTable nics ->
 		def id = UUID.randomUUID()
 		def builder = new StringBuilder()
-		nics.asList(DhcpClientConfig).each {
-			builder.append("<host mac='${it.getMac()}' name='${it.getHost()}' ip='${it.getIp()}'/>\n")
+		nics.cells().subList(1, nics.cells().size()).each {
+			builder.append("<host mac='${it[1]}' name='${it[0]}' ip='${it[2]}'/>\n")
 		}
 
 		def networkXml = """
@@ -74,57 +101,57 @@ class VirtDefs {
 			</network>
 		""".stripMargin()
 		logger.info("network xml:\n {}", networkXml)
-		scenario.write(networkXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
+		scenario.write(networkXml.replaceAll("<", "&lt;").replaceAll(">", "&gt;"))
 		vnets.put(name, id)
-		connect.listNetworks().each {
-			if(it == name) {
-				scenario.println("oops- there is a left-behind network " + name + " destroying it...")
-				connect.networkLookupByName(name).destroy()
-				scenario.println("network " + name + " destroyed")
+		def _scenario = scenario
+		def _connect = connect
+		connect.listNetworks().each { networkName ->
+			if (networkName == name) {
+				_scenario.println("oops- there is a left-behind network " + name + " destroying it...")
+				_connect.networkLookupByName(name).destroy()
+				_scenario.println("network " + name + " destroyed")
 			}
 		}
 		scenario.println("defining the new network")
 		connect.networkCreateXML(networkXml)
 		scenario.println("done")
+}
+
+Given(~"virtual disks") { DataTable details ->
+	def session = createSshSession()
+
+	def list = details.cells()
+	for (def row in list.subList(1, list.size())) {
+		def diskName = row[0]
+		def diskSize = Sizes.toSize(row[1])
+		session.executeRemoteCommand("rm -f $diskName")
+		session.executeRemoteCommand("truncate -s $diskSize $diskName && chmod 777 $diskName")
+		vmDisks.add(diskName)
 	}
+}
 
-	@Given("virtual disks")
-	void createVirtualDisk(DataTable details) {
-		def session = createSshSession()
-
-		def list = details.raw()
-		for(def row in list.subList(1, list.size())) {
-			def diskName = row.get(0)
-			def diskSize = Sizes.toSize(row.get(1))
-			session.executeRemoteCommand("rm -f $diskName")
-			session.executeRemoteCommand("truncate -s $diskSize $diskName && chmod 777 $diskName")
-			vmDisks.add(diskName)
+Given(~"^virtual machine (\\S+)") { String name, DataTable details ->
+	logger.info("create vm $name")
+	try {
+		def old = connect.domainLookupByName(name)
+		if (old != null) {
+			logger.info("trying to destroy left-behind domain " + name)
+			old.destroy()
 		}
+	} catch (LibvirtException e) {
+		//this is fine
 	}
+	def id = UUID.randomUUID()
+	def params = details.asMap(String, String)
+	def disk = disks[params['disk']]
 
-	@Given("^virtual machine (\\S+)")
-	void createVirtualMachine(String name, DataTable details) {
-		logger.info("create vm $name")
-		try {
-			def old = connect.domainLookupByName(name)
-			if (old != null) {
-				logger.info("trying to destroy left-behind domain " + name)
-				old.destroy()
-			}
-		} catch (LibvirtException e) {
-			//this is fine
-		}
-		def id = UUID.randomUUID()
-		def params = details.asMap(String, String)
-		def disk = disks[params['disk']]
+	GString vmDisk = createVmDisk(id, disk)
 
-		GString vmDisk = createVmDisk(id, disk)
-
-		def busCntr = 9
-		def extraDisks = ""
-		for(def key: params.keySet().findAll { it.startsWith("extra-disk:") }) {
-			def target = key.replaceAll("extra-disk:","")
-			extraDisks += """
+	def busCntr = 9
+	def extraDisks = ""
+	for (def key : params.keySet().findAll { it.startsWith("extra-disk:") }) {
+		def target = key.replaceAll("extra-disk:", "")
+		extraDisks += """
 				<disk type='file' device='disk'>
 					<driver name='qemu' type='raw'/>
 					<source file='$home/${params[key]}'/>
@@ -132,9 +159,9 @@ class VirtDefs {
 					<address type='pci' domain='0x0000' bus='0x00' slot='0x${Integer.toHexString(busCntr++)}' function='0x0'/>
 				</disk>
 			""".stripMargin()
-		}
+	}
 
-		def domainXml = """
+	def domainXml = """
 			<domain type='kvm'>
 			  <name>$name</name>
 			  <uuid>$id</uuid>
@@ -231,45 +258,20 @@ class VirtDefs {
 			  </devices>
 			</domain>
 		""".stripMargin()
-		scenario.write(domainXml.replaceAll("<","&lt;").replaceAll(">","&gt;"))
-		logger.info("vm definition: {}", domainXml)
-		connect.nodeInfo().sockets
-		connect.domainCreateXML(domainXml, 0)
-		vms.put(name, id)
-	}
+	scenario.write(domainXml.replaceAll("<", "&lt;").replaceAll(">", "&gt;"))
+	logger.info("vm definition: {}", domainXml)
+	connect.nodeInfo().sockets
+	connect.domainCreateXML(domainXml, 0)
+	vms.put(name, id)
+}
 
-	private GString createVmDisk(UUID id, Tuple disk) {
-		def session = createSshSession()
 
-		def templateImg = "$home/${disk.get(0).toString()}"
-
-		session.executeRemoteCommand("qemu-img create -f qcow2 -o backing_file=$templateImg $home/${id}.qcow2")
-		session.executeRemoteCommand("chmod 777 $home/${id}.qcow2 ")
-
-		session.close()
-		vmDisks.add("$home/${id}.qcow2")
-		"${id}.qcow2"
-	}
-
-	private ClientSession createSshSession() {
-		def ssh = SshClient.setUpDefaultClient()
-		ssh.start()
-		def connectFuture = ssh.connect(Environment.getStorageUser(), Environment.getStorageHost(), 22)
-		connectFuture.await()
-		def session = connectFuture.getSession()
-		session.addPasswordIdentity(Environment.getStoragePassword())
-		def authFuture = session.auth()
-		authFuture.await(1, TimeUnit.SECONDS)
-		authFuture.verify()
-		session
-	}
-
-	@Given("we wait until (\\S+) comes online, timeout: (\\d+) seconds")
-	void waitUntilPing(String address, long timeout) {
+Given(~/^we wait until (\S+) comes online with timeout: (\d+) seconds$/) {
+	String address, int timeout ->
 		def client = SshUtil.createSshClient()
 		def start = System.currentTimeMillis()
 		def end = start + (timeout * 1000)
-		while(System.currentTimeMillis() < end) {
+		while (System.currentTimeMillis() < end) {
 			try {
 				SshUtil.loginWithTestUser(client, address)
 				scenario.write("connected: $address")
@@ -282,52 +284,49 @@ class VirtDefs {
 			}
 		}
 		Assert.fail("node $address is still not available")
-	}
-
-
-
-	@When("server (\\S+) crashes")
-	void destroyVm(String name) {
-		connect.domainLookupByUUID(vms[name]).destroy()
-	}
-
-	@When("server (\\S+) shuts down")
-	void shutDownVm(String name) {
-		connect.domainLookupByUUID(vms[name]).shutdown()
-	}
-
-	@After(order = Integer.MIN_VALUE)
-	void cleanup() {
-		logger.info("--- virt cleanups ---")
-		vms.entrySet().forEach {
-			logger.info("stop and remove ${it.key}")
-			try{
-				connect.domainLookupByUUID(it.value).destroy()
-			} catch (LibvirtException e) {
-				logger.info("could not shut down ${it.key} / ${it.value}", e)
-			}
-		}
-		vmDisks.forEach {
-			def session = createSshSession()
-			session.executeRemoteCommand("rm -rf $it")
-			session.close()
-		}
-		vnets.entrySet().forEach {
-			logger.info("destroying network ${it.key}")
-			try {
-				connect.networkLookupByUUID(it.value).destroy()
-			} catch (LibvirtException e) {
-				logger.info("could not shut down network ${it.key} / ${it.value}", e)
-			}
-		}
-		if(connect != null) {
-			connect.close()
-			try {
-				connect.close()
-			} catch (LibvirtException e) {
-				logger.info("could not disconnect from libvirt", e)
-			}
-		}
-	}
-
 }
+
+
+When(~"server (\\S+) crashes") { String name ->
+	connect.domainLookupByUUID(vms[name]).destroy()
+}
+
+When(~"server (\\S+) shuts down") { String name ->
+	connect.domainLookupByUUID(vms[name]).shutdown()
+}
+
+After(order = Integer.MIN_VALUE) {
+	logger.info("--- virt cleanups ---")
+	def _logger = logger
+	def _connect = connect
+	vms.entrySet().forEach {
+		_logger.info("stop and remove ${it.key}")
+		try {
+			_connect.domainLookupByUUID(it.value).destroy()
+		} catch (LibvirtException e) {
+			_logger.info("could not shut down ${it.key} / ${it.value}", e)
+		}
+	}
+	def _session = createSshSession()
+	vmDisks.forEach {
+		_session.executeRemoteCommand("rm -rf $it")
+	}
+	_session.close()
+	vnets.entrySet().forEach {
+		_logger.info("destroying network ${it.key}")
+		try {
+			_connect.networkLookupByUUID(it.value).destroy()
+		} catch (LibvirtException e) {
+			_logger.info("could not shut down network ${it.key} / ${it.value}", e)
+		}
+	}
+	if (connect != null) {
+		connect.close()
+		try {
+			connect.close()
+		} catch (LibvirtException e) {
+			logger.info("could not disconnect from libvirt", e)
+		}
+	}
+}
+
