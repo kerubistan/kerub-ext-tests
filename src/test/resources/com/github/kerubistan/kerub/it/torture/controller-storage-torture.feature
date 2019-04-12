@@ -1,6 +1,6 @@
 Feature: Torturing the controller storage
 
-  Scenario Outline: Just create a few million items without clustering
+  Scenario Outline: Just create a few items without clustering
 	Given virtual network kerub-net-1 domain name kerub.it
 	  | host             | mac               | ip             |
 	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
@@ -8,7 +8,7 @@ Feature: Torturing the controller storage
 	  | mac  | 00:00:00:00:00:01  |
 	  | net  | kerub-net-1        |
 	  | disk | <controller-image> |
-	  | ram  | 1024 MiB            |
+	  | ram  | 1024 MiB           |
 	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd

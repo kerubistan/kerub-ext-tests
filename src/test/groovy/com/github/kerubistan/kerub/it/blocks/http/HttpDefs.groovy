@@ -147,6 +147,7 @@ Then(~/^session (\S+): user can login with (\S+) password (\S+)$/) {
 				response.allHeaders.find { it.name == "Set-Cookie" }
 						.value.with { it.substring(it.indexOf("=") + 1, it.indexOf(";")) }
 		)
+		logger.info("logged in as $username")
 }
 
 Then(~/^session (\d+): user information is (\S+) with role (\S+)$/) {

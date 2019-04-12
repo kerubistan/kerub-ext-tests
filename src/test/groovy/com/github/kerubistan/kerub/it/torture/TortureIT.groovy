@@ -7,6 +7,7 @@ import org.junit.runner.RunWith
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [
+				"classpath:com/github/kerubistan/kerub/it/torture/fileuploads.feature",
 				"classpath:com/github/kerubistan/kerub/it/torture/controller-storage-torture.feature"
 //				"classpath:com/github/kerubistan/kerub/it/torture/controller-restarts-torture.feature"
 		],

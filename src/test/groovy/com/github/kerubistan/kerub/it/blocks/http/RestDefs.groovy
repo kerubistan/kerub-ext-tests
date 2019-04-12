@@ -157,6 +157,45 @@ static boolean matches(List<List<String>> expected, JsonNode actual) {
 	return true
 }
 
+And(~/^session (\S+): user can upload a (ro|rw)?\s*(\S+) file (\S+) (\d+) times$/) {
+	String sessionId, String readOnlyStr, String format, String fileName, Integer times ->
+		def client = Clients.instance.get().getClient(sessionId)
+		def readOnly = "ro" == readOnlyStr
+
+		def size = IOUtils.copy(new GZIPInputStream(
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+		), new NullOutputStream())
+
+		for(i in 1..times) {
+			def id = UUID.randomUUID()
+
+			def put = put("s/r/virtual-storage", """
+				{
+					"@type":"virtual-storage",
+					"id" : "$id",
+					"name" : "$fileName-$i",
+					"size" : "$size",
+					"readOnly" : $readOnly
+				}
+				""".stripMargin())
+			def putResponse = client.execute(put)
+			logResponse(putResponse, scenario)
+			assertResponseStatus(putResponse, 200)
+
+			def post = post("s/r/virtual-storage/load/$format/$id")
+			post.setHeader("Content-Type", "multipart/form-data")
+			def countingInputStream = new CountingInputStream(new GZIPInputStream(
+					Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+			))
+			post.setEntity(MultipartEntityBuilder.create().addBinaryBody("file", countingInputStream).build())
+
+			def response = client.execute(post)
+			logResponse(response, scenario)
+			Assert.assertTrue(response.getStatusLine().statusCode > 200 && response.getStatusLine().statusCode < 300)
+		}
+
+}
+
 And(~/^session (\S+): user can upload a (ro|rw)?\s*(\S+) file (\S+) - generated id into into temp:(\S+)$/) {
 	String sessionId, String readOnlyStr, String format, String fileName, String tempName ->
 		def client = Clients.instance.get().getClient(sessionId)
@@ -193,7 +232,8 @@ And(~/^session (\S+): user can upload a (ro|rw)?\s*(\S+) file (\S+) - generated 
 		scenario.write("Upload of ${countingInputStream.byteCount} bytes took ${start - System.currentTimeMillis()} ms")
 		scenario.write("status code is ${response.getStatusLine().statusCode}")
 
-		Assert.assertEquals(204, response.getStatusLine().statusCode)
+		// http ok-something
+		Assert.assertTrue(response.getStatusLine().statusCode > 200 && response.getStatusLine().statusCode < 300)
 		setData(tempName, id.toString())
 }
 
