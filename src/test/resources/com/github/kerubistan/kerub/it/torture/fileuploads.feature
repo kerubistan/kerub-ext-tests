@@ -54,6 +54,7 @@ Feature: tons of file uploads
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
+      | centos_7         | ubuntu_18   |
 
 #  Scenario Outline: tons of file uploads on <host-image>
 #	Given virtual network kerub-net-1 domain name kerub.it
