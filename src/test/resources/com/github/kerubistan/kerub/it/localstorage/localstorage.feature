@@ -61,6 +61,7 @@ Feature: Local storage
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
+	  | centos_7         | ubuntu_18   |
 
   Scenario Outline: Local mirrored LVM images
 	Given virtual network kerub-net-1 domain name kerub.it
@@ -131,6 +132,7 @@ Feature: Local storage
 	  | controller-image | host-image  |
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
+	  | centos_7         | ubuntu_18   |
 
 
   Scenario Outline: Local filesystems
@@ -162,7 +164,7 @@ Feature: Local storage
 	  | com.github.kerubistan.kerub                  | debug |
 	  | org.apache.sshd.client.session.ClientSession | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
-	And command executed on 192.168.123.31:sudo mkfs -t <filesystem> /dev/vdb
+	And command executed on 192.168.123.31:sudo mkfs -t <filesystem> /dev/vdb <options>
 	And command executed on 192.168.123.31:sudo mkdir /kerub
 	And command executed on 192.168.123.31:sudo mount /dev/vdb /kerub
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
@@ -175,8 +177,9 @@ Feature: Local storage
 	And session 1: user can fetch public key for 192.168.123.31 into temp host-1-pk
 	And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
 	And session 1: host identified by key host-1-id should have fs storage capability registered with size around 200GB +-70GB
-	  | property | expected value |
-	  | fsType   | <filesystem>   |
+	  | property   | expected value |
+	  | fsType     | <filesystem>   |
+	  | mountPoint | /kerub         |
 	And session 1: user can upload a raw file TinyCore-current.iso - generated id into into temp:iso-id
 	And session 1: user can create a disk with size 10GB - generated id into into temp:disk-id
 	And session 1: user can create a vm - generated id into into temp:vm-id
@@ -194,6 +197,7 @@ Feature: Local storage
 	And session 1: virtual machine temp:vm-id should be started on host temp:host-1-id
 
 	Examples:
-	  | controller-image | host-image  | filesystem |
-	  | centos_7         | centos_7    | ext3       |
-	  | centos_7         | opensuse_42 | ext4       |
+	  | controller-image | host-image  | filesystem | options    |
+	  | centos_7         | centos_7    | ext3       | -Jsize=128 |
+	  | centos_7         | opensuse_42 | ext4       | -Jsize=128 |
+	  | centos_7         | ubuntu_18   | ext4       | -Jsize=128 |
