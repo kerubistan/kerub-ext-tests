@@ -62,6 +62,7 @@ Feature: Local storage
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
 	  | centos_7         | ubuntu_18   |
+	  | centos_7         | ubuntu_16   |
 
   Scenario Outline: Local mirrored LVM images
 	Given virtual network kerub-net-1 domain name kerub.it
@@ -133,6 +134,7 @@ Feature: Local storage
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
 	  | centos_7         | ubuntu_18   |
+	  | centos_7         | ubuntu_16   |
 
 
   Scenario Outline: Local filesystems
@@ -201,3 +203,4 @@ Feature: Local storage
 	  | centos_7         | centos_7    | ext3       | -Jsize=128 |
 	  | centos_7         | opensuse_42 | ext4       | -Jsize=128 |
 	  | centos_7         | ubuntu_18   | ext4       | -Jsize=128 |
+	  | centos_7         | ubuntu_16   | ext4       | -Jsize=128 |

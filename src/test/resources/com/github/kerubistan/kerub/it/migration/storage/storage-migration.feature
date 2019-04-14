@@ -73,6 +73,7 @@ Feature: Storage migration
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
 	  | centos_7         | ubuntu_18   |
+	  | centos_7         | ubuntu_16   |
 
 
   Scenario Outline: LVM to LVM migration of read-only virtual storage (duplicate - deduplicate)
@@ -149,6 +150,7 @@ Feature: Storage migration
 	  | centos_7         | centos_7    |
 	  | centos_7         | opensuse_42 |
 	  | centos_7         | ubuntu_18   |
+	  | centos_7         | ubuntu_16   |
 
 
   Scenario Outline: LVM (<source-host-image>) to Gvinum (<target-host-image>) migration of read-write virtual storage (dead migrate)
@@ -224,4 +226,5 @@ Feature: Storage migration
 	  | centos_7         | centos_7          | freebsd_11        |
 	  | centos_7         | centos_7          | freebsd_12        |
 	  | centos_7         | ubuntu_18         | freebsd_12        |
+	  | centos_7         | ubuntu_16         | freebsd_12        |
 	  | centos_7         | opensuse_42       | freebsd_12        |
