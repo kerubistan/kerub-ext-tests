@@ -16,11 +16,11 @@ World {
 	new ScenarioEnvironment()
 }
 
-Before { Scenario scenario ->
+Before(Integer.MAX_VALUE) { Scenario scenario ->
 	setScenario(scenario)
 	ScenarioAccess.scenarioEnvironment.set(scenario)
 }
 
-After {
+After(Integer.MIN_VALUE) {
 	ScenarioAccess.scenarioEnvironment.remove()
 }

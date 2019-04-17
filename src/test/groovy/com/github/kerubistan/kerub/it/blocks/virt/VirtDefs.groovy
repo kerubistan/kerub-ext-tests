@@ -23,6 +23,7 @@ class VirtEnvironment {
 	static String home = "/home/${Environment.getStorageUser()}/"
 
 	static disks = [
+			"centos_6": new Tuple("kerub-centos-6-host-1.qcow2", 1),
 			"centos_7" : new Tuple("kerub-centos-7-all-5.qcow2", 9),
 			"opensuse_42": new Tuple("kerub-openSUSE-42-all-3.qcow2", 13),
 			"ubuntu_16": new Tuple("kerub-ubuntu-16-all-1.qcow2", 1),
@@ -51,7 +52,7 @@ class VirtEnvironment {
 		"${id}.qcow2"
 	}
 
-	private static ClientSession createSshSession() {
+	static ClientSession createSshSession() {
 		def ssh = SshClient.setUpDefaultClient()
 		ssh.start()
 		def connectFuture = ssh.connect(Environment.getStorageUser(), Environment.getStorageHost(), 22)
