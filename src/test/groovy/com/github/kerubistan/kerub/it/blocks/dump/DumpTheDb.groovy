@@ -30,7 +30,7 @@ Given(~/^we will dump controller database (on success|on failure|always)$/) {
 		if (dumpWhen == "on success") {
 			dumpOn = DumpOn.Success
 		} else if (dumpWhen == "on failure") {
-			dumpOn = DumpOn.Success
+			dumpOn = DumpOn.Failure
 		} else if (dumpWhen == "always") {
 			dumpOn = DumpOn.Always
 		} else {
