@@ -7,7 +7,8 @@ import org.junit.runner.RunWith
 @RunWith(Cucumber)
 @CucumberOptions(
 		features = [
-				"classpath:com/github/kerubistan/kerub/it/hosts/hosts.feature"
+				"classpath:com/github/kerubistan/kerub/it/hosts/hosts.feature",
+				"classpath:com/github/kerubistan/kerub/it/hosts/arm-hosts.feature"
 //				"classpath:com/github/kerubistan/kerub/it/hosts/updated-all.feature"
 		],
 		glue = [
