@@ -29,6 +29,7 @@ class VirtEnvironment {
 			"opensuse_42": new Tuple("kerub-openSUSE-42-all-3.qcow2", 13),
 			"ubuntu_16": new Tuple("kerub-ubuntu-16-all-1.qcow2", 1),
 			"ubuntu_18": new Tuple("kerub-ubuntu-18-all-1.qcow2", 1),
+			"ubuntu_18_arm": new Tuple("kerub-ubuntu-18-arm-1.qcow2", 1),
 			"freebsd_11": new Tuple("kerub-freebsd-11-all-1.qcow2", 1),
 			"freebsd_12": new Tuple("kerub-freebsd-12-all-1.qcow2", 1)
 	]

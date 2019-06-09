@@ -66,5 +66,6 @@ Feature: ARM hosts
 	  | host.capabilities will be non-null |
 
 	Examples:
-	  | controller-image | ostype | host-image   | lsblk | fs-setup                                                                      | volume-setup                         |
-	  | centos_7         | linux  | debian_9_arm | lsblk | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub" | sudo vgcreate kerub-storage /dev/vdb |
+	  | controller-image | ostype | host-image    | lsblk | fs-setup                                                                      | volume-setup                         |
+	  | centos_7         | linux  | debian_9_arm  | lsblk | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub" | sudo vgcreate kerub-storage /dev/vdb |
+	  | centos_7         | linux  | ubuntu_18_arm | lsblk | sudo bash -c "mkfs -t ext4 /dev/vdb && mkdir /kerub && mount /dev/vdb /kerub" | sudo vgcreate kerub-storage /dev/vdb |
