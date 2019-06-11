@@ -30,7 +30,7 @@ class Clients {
 					.setDefaultRequestConfig(
 							RequestConfig.custom()
 									.setConnectTimeout(100)
-									.setSocketTimeout(100000)
+									.setSocketTimeout(200000)
 									.setConnectionRequestTimeout(100000)
 									.build()
 					)
