@@ -18,10 +18,6 @@ class Clients {
 		}
 	}
 
-	static HttpClient getTestClient(String clientId) {
-		return instance.get().getClient(clientId)
-	}
-
 	HttpClient getClient(String clientId) {
 		def client = clients.get(clientId)
 		if(client == null) {
