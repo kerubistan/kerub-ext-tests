@@ -24,6 +24,9 @@ Feature: ARM hosts
 	  | ram            | 512 MiB           |
 	  | extra-disk:vdb | host-1-disk-1     |
 	  | extra-disk:vdc | host-1-disk-2     |
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait 15 seconds
+	And we fetch basic <ostype> host info from 192.168.123.31
 	And ARM64 virtual machine host-2
 	  | mac            | 00:00:00:00:02:02 |
 	  | net            | kerub-net-1       |
@@ -31,14 +34,9 @@ Feature: ARM hosts
 	  | ram            | 512 MiB           |
 	  | extra-disk:vdb | host-2-disk-1     |
 	  | extra-disk:vdc | host-2-disk-2     |
-	And we will attach the following log files at the end of the scenario
-	  | 192.168.123.11 | /var/log/kerub/kerub.log |
-	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
-	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
 	And we wait until 192.168.123.32 comes online with timeout: 300 seconds
-	And we fetch basic <ostype> host info from 192.168.123.31
-	And we fetch basic <ostype> host info from 192.168.123.32
 	And we wait 15 seconds
+	And we fetch basic <ostype> host info from 192.168.123.32
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level
