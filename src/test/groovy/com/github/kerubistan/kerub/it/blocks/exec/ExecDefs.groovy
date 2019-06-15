@@ -12,6 +12,8 @@ import freemarker.template.Configuration
 import freemarker.template.Template
 import io.cucumber.datatable.DataTable
 import org.apache.commons.io.IOUtils
+import org.apache.sshd.client.scp.DefaultScpClient
+import org.apache.sshd.client.subsystem.sftp.impl.DefaultSftpClient
 import org.apache.sshd.common.SshException
 import org.apache.sshd.common.scp.ScpTimestamp
 
@@ -88,7 +90,7 @@ Given(~/^(\S+) package file uploaded to (\S+) directory (\S+)$/) {
 				def client = SshUtil.createSshClient()
 				def session = SshUtil.loginWithTestUser(client, nodeAddress)
 
-				def sftpClient = session.createSftpClient()
+				def sftpClient = new DefaultSftpClient(session)
 				def files = new File("ospackages/$distroName").listFiles()
 				assertEquals(1, files.length)
 				def file = files[0]
@@ -119,7 +121,7 @@ Given(~/^file on (\S+): (\S+) generated from (\S+) using parameters$/) {
 		def writer = new StringWriter()
 		template.process(TemplateUtil.convert(dataTable), writer)
 
-		session.createScpClient().upload(
+		new DefaultScpClient(session, null, null).upload(
 				writer.toString().getBytes(),
 				path,
 				Arrays.asList(
@@ -176,7 +178,8 @@ And(~/^kerub logger update on (\S+), root is (\S+) level$/) { String addr, Strin
 	while (!success && cntr < 10) {
 		cntr++
 		try {
-			def sftpClient = session.createSftpClient()
+			session
+			def sftpClient = new DefaultSftpClient(session)
 			def output = sftpClient.write("/tmp/kerub-logback.xml")
 			def writer = output.newWriter()
 			writer.write(loggerConfig)

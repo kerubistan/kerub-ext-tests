@@ -54,6 +54,20 @@ class VirtEnvironment {
 		"${id}.qcow2"
 	}
 
+	GString createVmFd(UUID id, Tuple disk) {
+		def session = createSshSession()
+
+		def templateImg = "$home/${disk.get(0).toString()}".replaceAll("qcow2", "fd")
+
+		session.executeRemoteCommand("cp $templateImg $home/${id}.fd")
+		session.executeRemoteCommand("chmod 777 $home/${id}.fd ")
+
+		session.close()
+		vmDisks.add("$home/${id}.fd")
+		"${id}.fd"
+	}
+
+
 	static ClientSession createSshSession() {
 		def ssh = SshClient.setUpDefaultClient()
 		ssh.start()
@@ -151,6 +165,8 @@ Given(~"^ARM64 virtual machine (\\S+)") { String name, DataTable details ->
 	def disk = disks[params['disk']]
 
 	GString vmDisk = createVmDisk(id, disk)
+	GString vmFd = createVmFd(id, disk)
+
 
 	String extraDisks = extraDisksXml(params, home)
 
@@ -164,7 +180,7 @@ Given(~"^ARM64 virtual machine (\\S+)") { String name, DataTable details ->
   <os>
     <type arch='aarch64' machine='virt-2.11'>hvm</type>
     <loader readonly='yes' type='pflash'>/usr/share/AAVMF/AAVMF_CODE.fd</loader>
-    <nvram>$home/kerub-debian-9-arm-1.fd</nvram>
+    <nvram>$home/t$vmFd</nvram>
   </os>
   <features>
     <acpi/>
