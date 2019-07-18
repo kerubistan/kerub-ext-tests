@@ -193,8 +193,9 @@ Feature: Storage migration
 	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
 	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
 	And kerub logger update on 192.168.123.11, root is info level
-	  | com.github.kerubistan.kerub                  | debug |
-	  | org.apache.sshd.client.session.ClientSession | debug |
+	  | com.github.kerubistan.kerub                                   | debug |
+	  | org.apache.sshd.client.session.ClientSession                  | debug |
+	  | com.github.kerubistan.kerub.utils.junix.storagemanager.gvinum | debug |
 	And command template executed on 192.168.123.11: <controller-image> / start-cmd
 	And command executed on 192.168.123.31:sudo lvm vgcreate kerub-storage /dev/vdb /dev/vdc
 	And command executed on 192.168.123.32: echo drive vtbd1 device /dev/vtbd1 >> /tmp/drives.txt
