@@ -196,6 +196,55 @@ And(~/^session (\S+): user can upload a (ro|rw)?\s*(\S+) file (\S+) (\d+) times$
 
 }
 
+And(~/^session (\S+): user can upload and delete a (ro|rw)?\s*(\S+) file (\S+) (\d+) times$/) {
+	String sessionId, String readOnlyStr, String format, String fileName, Integer times ->
+		def client = Clients.instance.get().getClient(sessionId)
+		def readOnly = "ro" == readOnlyStr
+
+		def size = IOUtils.copy(new GZIPInputStream(
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+		), new NullOutputStream())
+
+		for(i in 1..times) {
+			def id = UUID.randomUUID()
+
+			scenario.write("upload $i out of $times")
+
+			def put = put("s/r/virtual-storage", """
+				{
+					"@type":"virtual-storage",
+					"id" : "$id",
+					"name" : "$fileName-$i",
+					"size" : "$size",
+					"readOnly" : $readOnly
+				}
+				""".stripMargin())
+			def putResponse = client.execute(put)
+			logResponse(putResponse, scenario)
+			assertResponseStatus(putResponse, 200)
+
+			def post = post("s/r/virtual-storage/load/$format/$id")
+			post.setHeader("Content-Type", "multipart/form-data")
+			def countingInputStream = new CountingInputStream(new GZIPInputStream(
+					Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName + ".gz")
+			))
+			post.setEntity(MultipartEntityBuilder.create().addBinaryBody("file", countingInputStream).build())
+
+			def response = client.execute(post)
+			countingInputStream.close()
+
+			logResponse(response, scenario)
+			Assert.assertTrue(response.getStatusLine().statusCode > 200 && response.getStatusLine().statusCode < 300)
+
+			def delete = delete("s/r/virtual-storage/$id")
+			def deleteResponse = client.execute(delete)
+			logResponse(deleteResponse, scenario)
+
+		}
+
+}
+
+
 And(~/^session (\S+): user can upload a (ro|rw)?\s*(\S+) file (\S+) - generated id into into temp:(\S+)$/) {
 	String sessionId, String readOnlyStr, String format, String fileName, String tempName ->
 		def client = Clients.instance.get().getClient(sessionId)
@@ -430,6 +479,46 @@ And(~/^session (\S+): lvm volume group name pattern:(.*)$/) {
 		def storageTechnologies = jsonConfig["storageTechnologies"] as ObjectNode
 		storageTechnologies
 		//TODO
+}
+
+And(~/^session (\S+): controller config (\S+) set to (\S+) type (\S+)$/) {
+	String sessionId, String path, newValue, type ->
+
+		def client = Clients.instance.get().getClient(sessionId)
+		def response = client.execute(get("s/r/config"))
+		def jsonConfig = new ObjectMapper().readTree(logResponse(response, scenario))
+		def obj = jsonConfig as ObjectNode
+		def split = path.split("\\.")
+		for(def idx = 0; idx < split.size() -1; idx++) {
+			def item = split[idx]
+			obj = obj[item] as ObjectNode
+		}
+
+		def value = null;
+		switch (type) {
+			case "boolean":
+				value = Boolean.parseBoolean(newValue)
+				break;
+			case "string":
+				value = newValue;
+				break;
+			case "biginteger":
+				value = new BigInteger(newValue)
+				break;
+			default:
+				throw new IllegalArgumentException("Not handled: $type")
+		}
+
+		obj.put(split.last(), value)
+
+		def put = put("s/r/config",
+				new ObjectMapper()
+						.configure(SerializationFeature.INDENT_OUTPUT, true)
+						.writeValueAsString(jsonConfig))
+		put.setHeader("Content-Type", "application/json")
+		final def updateResponse = client.execute(put)
+		logResponse(updateResponse, scenario)
+
 }
 
 And(~/^session (\S+): all storage technologies disabled except (\S+)$/) {
