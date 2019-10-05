@@ -6,6 +6,7 @@ import cucumber.api.Scenario
 import cucumber.api.groovy.EN
 import cucumber.api.groovy.Hooks
 import org.apache.commons.io.IOUtils
+import org.apache.commons.io.input.TeeInputStream
 import org.apache.tools.tar.TarInputStream
 
 this.metaClass.mixin(Hooks)
@@ -47,9 +48,13 @@ After(Integer.MAX_VALUE) {
 			def httpEnv = HttpEnvironment.instance.get()
 			def client = Clients.instance.get().getClient("1")
 			def response = client.execute(httpEnv.get("s/r/admin/support/db-dump"))
-			scenario.println("db dump response: ${response.statusLine.statusCode}")
 
-			def tar = new TarInputStream(response.entity.content)
+			def path = "build/reports/cucumber/dump.${scenario.name.replaceAll(" ", "_")}.tar"
+			scenario.println("db dump response: ${response.statusLine.statusCode}\n see file $path")
+
+			TeeInputStream tStream = new TeeInputStream(response.entity.content, new FileOutputStream(path))
+
+			def tar = new TarInputStream(tStream)
 			def entry = tar.nextEntry
 
 			while (entry != null) {
