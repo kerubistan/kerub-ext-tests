@@ -60,6 +60,8 @@ Feature: Kerub host stories
 	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
 	When http://192.168.123.11:8080/ is set as application root
 	Then session 1: user can login with admin password password
+	# disable the fs benchmarking because it takes too long
+	And session 1: controller config storageTechnologies.storageBenchmarkingEnabled set to false type boolean
 	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
 	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
 	And command executed on 192.168.123.31: <lsblk>
