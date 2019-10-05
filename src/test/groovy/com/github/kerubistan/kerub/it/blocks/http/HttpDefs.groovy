@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.kerubistan.kerub.it.blocks.scenario.ScenarioAccess
 import cucumber.api.groovy.EN
 import cucumber.api.groovy.Hooks
+import org.apache.http.client.methods.HttpDelete
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpPut
@@ -60,6 +61,11 @@ class HttpEnvironment {
 	HttpPost post(String url) {
 		ScenarioAccess.get().write("sending post to $applicationRoot/$url ")
 		return new HttpPost("$applicationRoot/$url")
+	}
+
+	HttpDelete delete(String url) {
+		ScenarioAccess.get().write("sending delete to $applicationRoot/$url ")
+		return new HttpDelete("$applicationRoot/$url")
 	}
 
 	HttpUriRequest getSilent(String url) {
