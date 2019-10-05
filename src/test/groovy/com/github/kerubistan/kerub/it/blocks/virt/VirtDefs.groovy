@@ -26,9 +26,9 @@ class VirtEnvironment {
 			"centos_6": new Tuple("kerub-centos-6-host-1.qcow2", 1),
 			"centos_7" : new Tuple("kerub-centos-7-all-5.qcow2", 9),
 			"debian_9_arm" : new Tuple("kerub-debian-9-arm-1.qcow2", 1),
-			"opensuse_42": new Tuple("kerub-openSUSE-42-all-3.qcow2", 13),
-			"ubuntu_16": new Tuple("kerub-ubuntu-16-all-1.qcow2", 1),
-			"ubuntu_18": new Tuple("kerub-ubuntu-18-all-1.qcow2", 1),
+			"opensuse_42": new Tuple("kerub-openSUSE-42-all-4.qcow2", 13),
+			"ubuntu_16": new Tuple("kerub-ubuntu-16-all-2.qcow2", 1),
+			"ubuntu_18": new Tuple("kerub-ubuntu-18-all-2.qcow2", 1),
 			"ubuntu_18_arm": new Tuple("kerub-ubuntu-18-arm-1.qcow2", 1),
 			"freebsd_11": new Tuple("kerub-freebsd-11-all-1.qcow2", 1),
 			"freebsd_12": new Tuple("kerub-freebsd-12-all-1.qcow2", 1)
@@ -180,8 +180,7 @@ Given(~"^ARM64 virtual machine (\\S+)") { String name, DataTable details ->
   <os>
     <type arch='aarch64' machine='virt-2.11'>hvm</type>
     <loader readonly='yes' type='pflash'>/usr/share/AAVMF/AAVMF_CODE.fd</loader>
-    <nvram>$home/t$vmFd</nvram>
-  </os>
+  	<nvram template='/usr/share/OVMF/OVMF_VARS.fd'>$home/$vmFd</nvram>  </os>
   <features>
     <acpi/>
     <gic version='2'/>
