@@ -3,7 +3,9 @@ package com.github.kerubistan.kerub.it.blocks.http
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.NumericNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.databind.node.ValueNode
@@ -143,7 +145,7 @@ Then(~/^session (\S+): host identified by key (\S+) should have (\S+) storage ca
 		Assert.assertNotNull(storage)
 		Assert.assertEquals(
 				Sizes.toSize(sizeEstimate).toDouble(),
-				(storage["size"] as LongNode).longValue().toDouble(),
+				(storage["size"] as NumericNode).longValue().toDouble(),
 				Sizes.toSize(sizePrecision).toDouble(),
 		)
 }
@@ -482,7 +484,7 @@ And(~/^session (\S+): lvm volume group name pattern:(.*)$/) {
 }
 
 And(~/^session (\S+): controller config (\S+) set to (\S+) type (\S+)$/) {
-	String sessionId, String path, newValue, type ->
+	String sessionId, String path, String newValue, type ->
 
 		def client = Clients.instance.get().getClient(sessionId)
 		def response = client.execute(get("s/r/config"))
@@ -501,6 +503,12 @@ And(~/^session (\S+): controller config (\S+) set to (\S+) type (\S+)$/) {
 				break;
 			case "string":
 				value = newValue;
+				break;
+			case "csv":
+				value = new ArrayNode(JsonNodeFactory.instance)
+				newValue.split(",").toList().forEach {
+					((ArrayNode)value).add(it)
+				}
 				break;
 			case "biginteger":
 				value = new BigInteger(newValue)
