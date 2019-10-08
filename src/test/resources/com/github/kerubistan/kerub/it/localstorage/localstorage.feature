@@ -274,3 +274,205 @@ Feature: Local storage
 	  | centos_7         | opensuse_42 | ext4       | -Jsize=128 |
 	  | centos_7         | ubuntu_18   | ext4       | -Jsize=128 |
 	  | centos_7         | ubuntu_16   | ext4       | -Jsize=128 |
+
+	Scenario Outline: File storage on two hosts with <host-image>
+
+	  Given virtual network kerub-net-1 domain name kerub.it
+		| host             | mac               | ip             |
+		| kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
+		| host-1           | 00:00:00:00:02:01 | 192.168.123.31 |
+		| host-1           | 00:00:00:00:02:02 | 192.168.123.32 |
+	  And virtual disks
+		| name          | size   |
+		| host-1-disk-1 | 128 MB |
+		| host-1-disk-2 | 128 MB |
+		| host-2-disk-1 | 128 MB |
+		| host-2-disk-2 | 128 MB |
+	  And virtual machine kerub-controller
+		| mac  | 00:00:00:00:00:01  |
+		| net  | kerub-net-1        |
+		| disk | <controller-image> |
+		| ram  | 1024 MiB           |
+	  And virtual machine host-1
+		| mac            | 00:00:00:00:02:01 |
+		| net            | kerub-net-1       |
+		| disk           | <host-image>      |
+		| ram            | 2048 MiB          |
+		| extra-disk:vdb | host-1-disk-1     |
+		| extra-disk:vdc | host-1-disk-2     |
+	  And virtual machine host-2
+		| mac            | 00:00:00:00:02:02 |
+		| net            | kerub-net-1       |
+		| disk           | <host-image>      |
+		| ram            | 2048 MiB          |
+		| extra-disk:vdb | host-2-disk-1     |
+		| extra-disk:vdc | host-2-disk-2     |
+	  And we will attach the following log files at the end of the scenario
+		| 192.168.123.11 | /var/log/kerub/kerub.log |
+	  And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	  And we wait until 192.168.123.31 comes online with timeout: 300 seconds
+	  And we wait until 192.168.123.32 comes online with timeout: 300 seconds
+	  And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
+	  And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
+	  And kerub logger update on 192.168.123.11, root is info level
+		| com.github.kerubistan.kerub                  | debug |
+		| org.apache.sshd.client.session.ClientSession | debug |
+	  And we will dump controller database on failure
+	  And command template executed on 192.168.123.11: <controller-image> / start-cmd
+	  #setup two filesystems per node
+	  And command executed on 192.168.123.31:sudo mkdir /kerub
+	  And command executed on 192.168.123.31:sudo mkfs -t <filesystem> /dev/vdb <options>
+	  And command executed on 192.168.123.31:sudo mkdir /kerub/1
+	  And command executed on 192.168.123.31:sudo mount /dev/vdb /kerub/1
+	  And command executed on 192.168.123.31:sudo mkfs -t <filesystem> /dev/vdc <options>
+	  And command executed on 192.168.123.31:sudo mkdir /kerub/2
+	  And command executed on 192.168.123.31:sudo mount /dev/vdc /kerub/2
+	  #same for the second host
+	  And command executed on 192.168.123.32:sudo mkdir /kerub
+	  And command executed on 192.168.123.32:sudo mkfs -t <filesystem> /dev/vdb <options>
+	  And command executed on 192.168.123.32:sudo mkdir /kerub/1
+	  And command executed on 192.168.123.32:sudo mount /dev/vdb /kerub/1
+	  And command executed on 192.168.123.32:sudo mkfs -t <filesystem> /dev/vdc <options>
+	  And command executed on 192.168.123.32:sudo mkdir /kerub/2
+	  And command executed on 192.168.123.32:sudo mount /dev/vdc /kerub/2
+
+	  And we fetch basic linux host info from 192.168.123.31
+	  And we fetch basic linux host info from 192.168.123.32
+
+	  And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
+	  When http://192.168.123.11:8080/ is set as application root
+	  Then session 1: user can login with admin password password
+	  And session 1: controller config storageTechnologies.storageBenchmarkingEnabled set to false type boolean
+	  # if any volume groups on the hosts, I do not want those to play now, only FS
+	  And session 1: controller config storageTechnologies.lvmCreateVolumeEnabled set to false type boolean
+	  And session 1: controller config storageTechnologies.fsPathEnabled set to /kerub/1,/kerub/2,/kerub type csv
+	  And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
+
+	  # first node
+	  And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
+	  And session 1: user can fetch public key for 192.168.123.31 into temp host-1-pk
+	  And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
+	  And session 1: host identified by key host-1-id should have fs storage capability registered with size around 120MB +-10MB
+		| property   | expected value |
+		| fsType     | <filesystem>   |
+		| mountPoint | /kerub/1       |
+	  And session 1: host identified by key host-1-id should have fs storage capability registered with size around 120MB +-10MB
+		| property   | expected value |
+		| fsType     | <filesystem>   |
+		| mountPoint | /kerub/2       |
+
+	  # second node
+	  And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
+	  And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pk
+	  And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pk and store ID in temp host-2-id
+	  And session 1: host identified by key host-2-id should have fs storage capability registered with size around 120MB +-10MB
+		| property   | expected value |
+		| fsType     | <filesystem>   |
+		| mountPoint | /kerub/1       |
+	  And session 1: host identified by key host-2-id should have fs storage capability registered with size around 120MB +-10MB
+		| property   | expected value |
+		| fsType     | <filesystem>   |
+		| mountPoint | /kerub/2       |
+
+	  And session 1: user can upload a ro raw file TinyCore-current.iso 20 times
+
+	Examples:
+	  | controller-image | host-image  | filesystem | options    |
+	  | centos_7         | centos_7    | ext3       | -Jsize=2   |
+	  | centos_7         | opensuse_42 | ext4       | -Jsize=2 |
+	  | centos_7         | ubuntu_18   | ext4       | -Jsize=2 |
+	  | centos_7         | ubuntu_16   | ext4       | -Jsize=2 |
+
+  Scenario Outline: LVM volume storage on two hosts with <host-image>
+
+	Given virtual network kerub-net-1 domain name kerub.it
+	  | host             | mac               | ip             |
+	  | kerub-controller | 00:00:00:00:00:01 | 192.168.123.11 |
+	  | host-1           | 00:00:00:00:02:01 | 192.168.123.31 |
+	  | host-1           | 00:00:00:00:02:02 | 192.168.123.32 |
+	And virtual disks
+	  | name          | size   |
+	  | host-1-disk-1 | 128 MB |
+	  | host-1-disk-2 | 128 MB |
+	  | host-2-disk-1 | 128 MB |
+	  | host-2-disk-2 | 128 MB |
+	And virtual machine kerub-controller
+	  | mac  | 00:00:00:00:00:01  |
+	  | net  | kerub-net-1        |
+	  | disk | <controller-image> |
+	  | ram  | 1024 MiB           |
+	And virtual machine host-1
+	  | mac            | 00:00:00:00:02:01 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 2048 MiB          |
+	  | extra-disk:vdb | host-1-disk-1     |
+	  | extra-disk:vdc | host-1-disk-2     |
+	And virtual machine host-2
+	  | mac            | 00:00:00:00:02:02 |
+	  | net            | kerub-net-1       |
+	  | disk           | <host-image>      |
+	  | ram            | 2048 MiB          |
+	  | extra-disk:vdb | host-2-disk-1     |
+	  | extra-disk:vdc | host-2-disk-2     |
+	And we will attach the following log files at the end of the scenario
+	  | 192.168.123.11 | /var/log/kerub/kerub.log |
+	And we wait until 192.168.123.11 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.31 comes online with timeout: 300 seconds
+	And we wait until 192.168.123.32 comes online with timeout: 300 seconds
+	And <controller-image> package file uploaded to 192.168.123.11 directory /tmp
+	And command template executed on 192.168.123.11: <controller-image> / install-pkg-cmd
+	And kerub logger update on 192.168.123.11, root is info level
+	  | com.github.kerubistan.kerub                  | debug |
+	  | org.apache.sshd.client.session.ClientSession | debug |
+	And we will dump controller database on failure
+	And command template executed on 192.168.123.11: <controller-image> / start-cmd
+	  #setup two filesystems per node
+	And command executed on 192.168.123.31:sudo vgcreate host1-vg1 /dev/vdb
+	And command executed on 192.168.123.31:sudo vgcreate host1-vg2 /dev/vdc
+	  #same for the second host
+	And command executed on 192.168.123.32:sudo vgcreate host2-vg1 /dev/vdb
+	And command executed on 192.168.123.32:sudo vgcreate host2-vg2 /dev/vdc
+
+	And we fetch basic linux host info from 192.168.123.31
+	And we fetch basic linux host info from 192.168.123.32
+
+	And if we wait for the url http://192.168.123.11:8080/ to respond for max 360 seconds
+	When http://192.168.123.11:8080/ is set as application root
+	Then session 1: user can login with admin password password
+	And session 1: controller config storageTechnologies.lvmVGPattern set to host.*vg.* type string
+	And session 1: controller config storageTechnologies.storageBenchmarkingEnabled set to false type boolean
+	  # if any volume groups on the hosts, I do not want those to play now, only FS
+	And session 1: controller config storageTechnologies.lvmCreateVolumeEnabled set to true type boolean
+	And session 1: user can download kerub controller public ssh key to temp controller-public-sshkey
+
+	  # first node
+	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.31
+	And session 1: user can fetch public key for 192.168.123.31 into temp host-1-pk
+	And session 1: user can join host 192.168.123.31 using public key and fingerprint host-1-pk and store ID in temp host-1-id
+	And session 1: host identified by key host-1-id should have lvm storage capability registered with size around 120MB +-10MB
+	  | property        | expected value |
+	  | volumeGroupName | host1-vg1      |
+	And session 1: host identified by key host-1-id should have lvm storage capability registered with size around 120MB +-10MB
+	  | property        | expected value |
+	  | volumeGroupName | host1-vg2      |
+
+	  # second node
+	And Temporary controller-public-sshkey can be appended to /root/.ssh/authorized_keys on 192.168.123.32
+	And session 1: user can fetch public key for 192.168.123.32 into temp host-2-pk
+	And session 1: user can join host 192.168.123.32 using public key and fingerprint host-2-pk and store ID in temp host-2-id
+	And session 1: host identified by key host-2-id should have lvm storage capability registered with size around 120MB +-10MB
+	  | property        | expected value |
+	  | volumeGroupName | host2-vg1      |
+	And session 1: host identified by key host-2-id should have lvm storage capability registered with size around 120MB +-10MB
+	  | property        | expected value |
+	  | volumeGroupName | host2-vg2      |
+
+	And session 1: user can upload a ro raw file TinyCore-current.iso 20 times
+
+	Examples:
+	  | controller-image | host-image  |
+	  | centos_7         | centos_7    |
+	  | centos_7         | opensuse_42 |
+	  | centos_7         | ubuntu_18   |
+	  | centos_7         | ubuntu_16   |
